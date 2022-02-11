@@ -7,7 +7,11 @@ use tonic::{transport::Server, Request, Response, Status};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "0.0.0.0:50051".parse()?;
+    let addr = format!(
+        "0.0.0.0:{0}",
+        std::env::var("PORT").expect("env variable PORT not specified")
+    )
+    .parse()?;
 
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(affect_api::FILE_DESCRIPTOR_SET)

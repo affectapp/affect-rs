@@ -1,6 +1,6 @@
 [package]
 edition = "2021"
-name = "affect_server"
+name = "affect-server"
 version = "0.1.0"
 
 [dependencies]
