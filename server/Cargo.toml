@@ -1,0 +1,12 @@
+[package]
+edition = "2021"
+name = "affect_server"
+version = "0.1.0"
+
+[dependencies]
+affect-api = { git = "https://github.com/affectapp/api", rev = "332ac077" }
+prost-types = "0.9"
+tokio = { version = "1.16", features = ["macros", "rt-multi-thread"] }
+tonic = "0.6"
+tonic-reflection = "0.3.0"
+tonic-web = "0.2"
