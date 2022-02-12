@@ -7,6 +7,7 @@ use tonic::{transport::Server, Request, Response, Status};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Starting Affect server");
     let addr = format!(
         "0.0.0.0:{0}",
         std::env::var("PORT").expect("env variable PORT not specified")

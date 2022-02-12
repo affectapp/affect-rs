@@ -1,17 +1,24 @@
-# Cacheable-ish builder step (just dependencies).
-FROM rust:1.58 AS builder
-WORKDIR /deps
-RUN cargo new --lib --name=affect-server ./server
-COPY ./Cargo.toml ./
-COPY ./Cargo.lock ./
-COPY ./server/Cargo.toml ./server
-RUN rustup component add rustfmt
-RUN cargo build --release
-RUN rm -rf **/src
-# Build with project srcs.
+# Cacheable-ish builder steps (just dependencies).
+FROM rust:1.58 AS planner
 WORKDIR /builder
-COPY ./ ./
-RUN cp -rf /deps/* ./
+RUN rustup component add rustfmt
+RUN cargo install cargo-chef
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM rust:1.58 AS cacher
+WORKDIR /cacher
+RUN rustup component add rustfmt
+RUN cargo install cargo-chef
+COPY --from=planner /builder/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+FROM rust:1.58 AS builder
+WORKDIR /builder
+COPY . .
+COPY --from=cacher /cacher/target ./target
+COPY --from=cacher $CARGO_HOME $CARGO_HOME
+RUN rustup component add rustfmt
 RUN cargo build --release
 
 # App
