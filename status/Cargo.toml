@@ -1,0 +1,7 @@
+[package]
+edition = "2021"
+name = "affect-status"
+version = "0.1.0"
+
+[dependencies]
+tonic = "0.6"

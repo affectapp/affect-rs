@@ -1,0 +1,6 @@
+[postgres]
+uri = "postgres://"
+
+[firebase]
+gwk-url = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
+project-id = "affect-app"

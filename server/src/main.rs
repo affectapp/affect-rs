@@ -1,25 +1,51 @@
-use affect_api::affect::{
-    user_service_server::{UserService, UserServiceServer},
-    *,
-};
-use prost_types::Timestamp;
-use tonic::{transport::Server, Request, Response, Status};
+use affect_api::affect::user_service_server::UserServiceServer;
+use affect_server::{config::ServerConfig, firebase::FirebaseAuth, user_service::UserServiceImpl};
+use affect_storage::user::PostgresUserStore;
+use std::sync::Arc;
+use tonic::transport::Server;
+
+fn load_config() -> Result<ServerConfig, Box<dyn std::error::Error>> {
+    let config_path = std::env::var("CONFIG_PATH").ok();
+    let config = std::env::var("CONFIG").ok();
+
+    let config_str = match (config_path, config) {
+        (None, Some(config)) => config,
+        (Some(config_path), None) => std::fs::read_to_string(config_path)?,
+        (Some(_), Some(_)) => {
+            panic!("Only one of CONFIG and CONFIG_PATH environment variables should be specified")
+        }
+        (None, None) => {
+            panic!("Either CONFIG or CONFIG_PATH environment variables should be specified")
+        }
+    };
+
+    Ok(toml::from_str::<ServerConfig>(&config_str)?)
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Starting Affect server");
-    let addr = format!(
-        "0.0.0.0:{0}",
-        std::env::var("PORT").expect("env variable PORT not specified")
-    )
-    .parse()?;
+    println!("Loading config");
+    let config = load_config()?;
+
+    let port_str = std::env::var("PORT")
+        .ok()
+        .or_else(|| {
+            println!("PORT environment variable unspecified, using default port");
+            Some("50051".to_string())
+        })
+        .unwrap();
+    let addr = format!("0.0.0.0:{0}", port_str).parse()?;
+
+    let user_store = Arc::new(PostgresUserStore::connect(config.postgres.uri).await?);
+    let firebase_auth =
+        Arc::new(FirebaseAuth::load(config.firebase.gwk_url, config.firebase.project_id).await?);
 
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(affect_api::FILE_DESCRIPTOR_SET)
         .build()?;
-    let user_service = UserServiceImpl::default();
+    let user_service = UserServiceImpl::new(user_store.clone(), firebase_auth.clone());
 
-    println!("Running server: {:?}", addr);
+    println!("Starting server: {:?}", addr);
     Server::builder()
         .accept_http1(true)
         .add_service(tonic_web::enable(reflection_service))
@@ -28,32 +54,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     Ok(())
-}
-
-#[derive(Debug, Default)]
-pub struct UserServiceImpl {}
-
-#[tonic::async_trait]
-impl UserService for UserServiceImpl {
-    async fn create_user(&self, _: Request<CreateUserRequest>) -> Result<Response<User>, Status> {
-        todo!()
-    }
-
-    async fn get_user(&self, _: Request<GetUserRequest>) -> Result<Response<User>, Status> {
-        Ok(Response::new(User {
-            user_id: Some(UserId {
-                value: "test".to_string(),
-            }),
-            firebase_uid: "firebase_uid".to_string(),
-            create_time: Some(Timestamp::default()),
-            update_time: Some(Timestamp::default()),
-        }))
-    }
-
-    async fn list_users(
-        &self,
-        _: Request<ListUsersRequest>,
-    ) -> Result<Response<ListUsersResponse>, Status> {
-        todo!()
-    }
 }

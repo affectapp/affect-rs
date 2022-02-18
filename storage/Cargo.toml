@@ -1,0 +1,21 @@
+[package]
+edition = "2021"
+name = "affect-storage"
+version = "0.1.0"
+
+[dependencies]
+affect-status = { path = "../status" }
+async-trait = "0.1"
+base64 = "0.13"
+chrono = { version = "0.4" }
+futures = "0.3"
+sqlx = { version = "0.5", features = [
+  "uuid",
+  "postgres",
+  "runtime-tokio-rustls",
+  "migrate",
+  "chrono",
+  "offline",
+] }
+thiserror = "1.0"
+uuid = { version = "0.8", features = ["v4"] }

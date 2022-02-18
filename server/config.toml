@@ -1,0 +1,6 @@
+[postgres]
+uri = "postgres://thelgnil:JZul2o8_LUP8fX5UVu1w1nDbfNmi9duF@otto.db.elephantsql.com/thelgnil"
+
+[firebase]
+gwk-url = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
+project-id = "affect-app"
