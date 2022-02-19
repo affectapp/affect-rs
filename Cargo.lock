@@ -19,8 +19,12 @@ version = "0.1.0"
 dependencies = [
  "affect-api",
  "affect-storage",
+ "async-trait",
  "chrono",
+ "futures",
+ "hyper",
  "jwks-client",
+ "prost",
  "prost-types",
  "serde",
  "serde_json",
@@ -30,6 +34,7 @@ dependencies = [
  "tonic",
  "tonic-reflection",
  "tonic-web",
+ "tower",
  "uuid",
 ]
 

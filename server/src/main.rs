@@ -1,8 +1,12 @@
 use affect_api::affect::user_service_server::UserServiceServer;
-use affect_server::{config::ServerConfig, firebase::FirebaseAuth, user_service::UserServiceImpl};
+use affect_server::{
+    async_interceptor::AsyncInterceptorLayer, config::ServerConfig, firebase::FirebaseAuth,
+    interceptors::authn::AuthnInterceptor, services::user::UserServiceImpl,
+};
 use affect_storage::user::PostgresUserStore;
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use tonic::transport::Server;
+use tower::ServiceBuilder;
 
 fn load_config() -> Result<ServerConfig, Box<dyn std::error::Error>> {
     let config_path = std::env::var("CONFIG_PATH").ok();
@@ -45,9 +49,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
     let user_service = UserServiceImpl::new(user_store.clone(), firebase_auth.clone());
 
+    let authn_layer: AsyncInterceptorLayer<AuthnInterceptor> = AsyncInterceptorLayer::new(
+        AuthnInterceptor::new(firebase_auth.clone(), user_store.clone()),
+    );
+
+    let middleware = ServiceBuilder::new()
+        .timeout(Duration::from_secs(30))
+        .layer(authn_layer)
+        .into_inner();
+
     println!("Starting server: {:?}", addr);
     Server::builder()
         .accept_http1(true)
+        .layer(middleware)
         .add_service(tonic_web::enable(reflection_service))
         .add_service(tonic_web::enable(UserServiceServer::new(user_service)))
         .serve(addr)
