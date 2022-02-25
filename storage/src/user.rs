@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
+use crate::{Error, PgPool};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use sqlx::{postgres::PgPoolOptions, FromRow, Pool, Postgres};
+use sqlx::FromRow;
+use std::sync::Arc;
 use uuid::Uuid;
-
-use crate::Error;
 
 #[derive(Clone, Debug, FromRow)]
 pub struct UserRow {
@@ -33,28 +31,18 @@ pub trait UserStore: Sync + Send {
     ) -> Result<Option<UserRow>, Error>;
 }
 
-pub struct PostgresUserStore {
-    pool: Arc<Pool<Postgres>>,
+pub struct PgUserStore {
+    pool: Arc<PgPool>,
 }
 
-impl PostgresUserStore {
-    pub fn new(pool: Arc<Pool<Postgres>>) -> Self {
+impl PgUserStore {
+    pub fn new(pool: Arc<PgPool>) -> Self {
         Self { pool }
-    }
-
-    pub async fn connect(postgres_uri: String) -> Result<Self, Error> {
-        let pool = Arc::new(
-            PgPoolOptions::new()
-                .max_connections(2)
-                .connect(&postgres_uri)
-                .await?,
-        );
-        Ok(Self::new(pool))
     }
 }
 
 #[async_trait]
-impl UserStore for PostgresUserStore {
+impl UserStore for PgUserStore {
     async fn add_user(&self, new_user: NewUserRow) -> Result<UserRow, Error> {
         Ok(sqlx::query_as(
             "INSERT INTO users (create_time, update_time, firebase_uid, firebase_email) \
@@ -65,7 +53,7 @@ impl UserStore for PostgresUserStore {
         .bind(&new_user.update_time)
         .bind(&new_user.firebase_uid)
         .bind(&new_user.firebase_email)
-        .fetch_one(self.pool.as_ref())
+        .fetch_one(self.pool.inner())
         .await?)
     }
 
@@ -79,7 +67,7 @@ impl UserStore for PostgresUserStore {
             WHERE firebase_uid = $1",
         )
         .bind(firebase_uid)
-        .fetch_optional(self.pool.as_ref())
+        .fetch_optional(self.pool.inner())
         .await?)
     }
 }

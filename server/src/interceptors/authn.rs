@@ -4,8 +4,9 @@ use affect_api::affect::auth_metadata::PeerToken;
 use affect_api::affect::AuthMetadata;
 use affect_storage::user::{UserRow, UserStore};
 use async_trait::async_trait;
+use hyper::Body;
 use hyper::Request;
-use hyper::{header::HeaderValue, Body};
+use log::debug;
 use prost::Message;
 use std::io::Cursor;
 use std::sync::Arc;
@@ -22,6 +23,8 @@ pub enum Peer {
     Anonymous,
 }
 
+impl Peer {}
+
 #[derive(Clone)]
 pub struct AuthnInterceptor {
     firebase_auth: Arc<FirebaseAuth>,
@@ -36,14 +39,13 @@ impl AuthnInterceptor {
         }
     }
 
-    async fn authenticate(&self, req: &hyper::Request<Body>) -> Result<Peer, Status> {
-        let auth_metadata_from_bytes = req
-            .headers()
-            .get("auth-bin")
-            .map(HeaderValue::as_ref)
+    pub async fn authenticate_bytes(&self, u8: Option<&[u8]>) -> Result<Peer, Status> {
+        let auth_metadata_from_bytes = u8
             .map(|u8| AuthMetadata::decode(&mut Cursor::new(u8)))
             .transpose()
-            .map_err(|_| Status::unauthenticated("'auth-bin' header could not be decoded"))?;
+            .map_err(|e| {
+                Status::unauthenticated(format!("'auth-bin' header could not be decoded: {:?}", e))
+            })?;
 
         let peer = match auth_metadata_from_bytes {
             Some(auth_metadata) => match auth_metadata.peer_token {
@@ -69,16 +71,54 @@ impl AuthnInterceptor {
             _ => Peer::Anonymous,
         };
 
-        println!("Request from {:?}", peer);
+        debug!("Request from {:?}", peer);
 
         Ok(peer)
+    }
+
+    pub async fn authenticate_hyper_request(
+        &self,
+        req: &hyper::Request<Body>,
+    ) -> Result<Peer, Status> {
+        let base64_bytes = match req.headers().get("auth-bin").map(|value| value.as_ref()) {
+            Some(bytes) => bytes,
+            None => return self.authenticate_bytes(None).await,
+        };
+
+        let base64_string =
+            std::str::from_utf8(base64_bytes).map_err(|_| Status::unauthenticated("not utf8"))?;
+        let auth_metadata_bytes =
+            base64::decode(base64_string).map_err(|_| Status::unauthenticated("not base64"))?;
+
+        self.authenticate_bytes(Some(&auth_metadata_bytes)).await
+    }
+
+    pub async fn authenticate_tonic_request<T>(
+        &self,
+        req: &tonic::Request<T>,
+    ) -> Result<Peer, Status> {
+        let base64_bytes = match req
+            .metadata()
+            .get_bin("auth-bin")
+            .map(|value| value.as_ref())
+        {
+            Some(bytes) => bytes,
+            None => return self.authenticate_bytes(None).await,
+        };
+
+        let base64_string =
+            std::str::from_utf8(base64_bytes).map_err(|_| Status::unauthenticated("not utf8"))?;
+        let auth_metadata_bytes =
+            base64::decode(base64_string).map_err(|_| Status::unauthenticated("not base64"))?;
+
+        self.authenticate_bytes(Some(&auth_metadata_bytes)).await
     }
 }
 
 #[async_trait]
 impl AsyncInterceptor for AuthnInterceptor {
     async fn intercept(&self, req: &mut Request<Body>) -> Result<(), Status> {
-        let peer = self.authenticate(req).await?;
+        let peer = self.authenticate_hyper_request(req).await?;
         req.extensions_mut().insert(peer);
         Ok(())
     }

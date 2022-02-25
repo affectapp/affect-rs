@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct ServerConfig {
+    pub port: u16,
     pub postgres: PostgresConfig,
     pub firebase: FirebaseConfig,
 }
