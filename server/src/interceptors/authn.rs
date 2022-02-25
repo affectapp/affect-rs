@@ -1,5 +1,5 @@
-use crate::async_interceptor::AsyncInterceptor;
 use crate::firebase::FirebaseAuth;
+use crate::tonic::async_interceptor::AsyncInterceptor;
 use affect_api::affect::auth_metadata::PeerToken;
 use affect_api::affect::AuthMetadata;
 use affect_storage::user::{UserRow, UserStore};

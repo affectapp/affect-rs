@@ -1,7 +1,11 @@
 use affect_api::affect::user_service_server::UserServiceServer;
 use affect_server::{
-    async_interceptor::AsyncInterceptorLayer, config::ServerConfig, firebase::FirebaseAuth,
-    interceptors::authn::AuthnInterceptor, services::user::UserServiceImpl,
+    change::{ChangeApi, ChangeCredentials, SearchNonprofitsRequestBuilder},
+    config::ServerConfig,
+    firebase::FirebaseAuth,
+    interceptors::authn::AuthnInterceptor,
+    services::user::UserServiceImpl,
+    tonic::async_interceptor::AsyncInterceptorLayer,
 };
 use affect_storage::{user::PgUserStore, PgPool};
 use log::info;
@@ -45,6 +49,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Dependencies:
     let firebase_auth =
         Arc::new(FirebaseAuth::load(config.firebase.gwk_url, config.firebase.project_id).await?);
+    let change_api = Arc::new(ChangeApi::new(ChangeCredentials::new(
+        config.change.public_key,
+        config.change.secret_key,
+    )));
 
     // Interceptors/middleware:
     let authn_interceptor_layer = AsyncInterceptorLayer::new(AuthnInterceptor::new(

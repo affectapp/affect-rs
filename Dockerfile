@@ -33,6 +33,7 @@ FROM envoyproxy/envoy:v1.12.2 AS envoy
 
 # Runtime for the server and envoy.
 FROM debian:buster-slim
+ENV RUST_LOG=debug
 WORKDIR /app
 COPY --from=builder /builder/target/release/affect-server .
 COPY --from=envoy /usr/local/bin/envoy .
