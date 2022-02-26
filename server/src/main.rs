@@ -2,7 +2,6 @@ use affect_api::affect::{
     nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
 };
 use affect_server::{
-    change::{ChangeApi, ChangeCredentials},
     config::ServerConfig,
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
@@ -55,10 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Dependencies:
     let firebase_auth =
         Arc::new(FirebaseAuth::load(config.firebase.gwk_url, config.firebase.project_id).await?);
-    let change_api = Arc::new(ChangeApi::new(ChangeCredentials::new(
-        config.change.public_key,
-        config.change.secret_key,
-    )));
+    // let change_api = Arc::new(ChangeApi::new(ChangeCredentials::new(
+    //     config.change.public_key,
+    //     config.change.secret_key,
+    // )));
 
     // Interceptors/middleware:
     let authn_interceptor_layer = AsyncInterceptorLayer::new(AuthnInterceptor::new(

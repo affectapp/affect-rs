@@ -54,6 +54,7 @@ name = "affect-storage"
 version = "0.1.0"
 dependencies = [
  "affect-status",
+ "anyhow",
  "async-trait",
  "base64 0.13.0",
  "chrono",

@@ -6,25 +6,26 @@ pub mod stores;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    // Error occurred when executing some SQL operation.
     #[error("sql failed: {0:?}")]
     Sql(#[from] sqlx::Error),
 
+    // Error occurred when running migrations.
     #[error("migration failed: {0:?}")]
     Migrate(#[from] MigrateError),
 
-    #[error("json serialize/deserialize failed: {0}")]
-    Json(#[from] serde_json::Error),
+    // Page token serialization/deserialization failed.
+    #[error(transparent)]
+    PageToken(anyhow::Error),
 
-    #[error("not utf8: {0}")]
-    Utf8(#[from] std::str::Utf8Error),
-
-    #[error("unable to decode: {0}")]
-    Decode(#[from] base64::DecodeError),
+    // Some other/unexpected error occurred.
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
 }
 
 impl From<Error> for Status {
     fn from(error: Error) -> Self {
-        return Status::internal(format!("storage error: {0}", error));
+        return Status::internal(format!("storage error: {:?}", error));
     }
 }
 
@@ -33,6 +34,7 @@ pub struct PgPool {
 }
 
 impl PgPool {
+    // Connects to the provided postgres URI and returns the connected pool.
     pub async fn connect(postgres_uri: String) -> Result<Self, Error> {
         // let connect_options = PgConnectOptions::new();
         let inner = PgPoolOptions::new()
@@ -42,10 +44,12 @@ impl PgPool {
         Ok(Self { inner })
     }
 
+    // Returns reference to the underlying sqlx pg pool.
     pub fn inner(&self) -> &Pool<Postgres> {
         &self.inner
     }
 
+    // Run migrations.
     pub async fn run_migrations(&self) -> Result<(), Error> {
         Ok(sqlx::migrate!().run(self.inner()).await?)
     }

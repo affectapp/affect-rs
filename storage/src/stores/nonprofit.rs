@@ -1,3 +1,4 @@
+use crate::page_token::PageTokenable;
 use crate::{Error, PgPool};
 use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
@@ -37,10 +38,10 @@ pub struct NonprofitPageToken {
     pub create_time: DateTime<Utc>,
 }
 
-impl From<NonprofitRow> for NonprofitPageToken {
-    fn from(row: NonprofitRow) -> Self {
+impl PageTokenable<NonprofitPageToken> for NonprofitRow {
+    fn page_token(&self) -> NonprofitPageToken {
         NonprofitPageToken {
-            create_time: row.create_time,
+            create_time: self.create_time.clone(),
         }
     }
 }

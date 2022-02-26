@@ -7,7 +7,7 @@ use std::collections::HashMap;
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("request error: {0:?}")]
-    HttpRequest(#[from] reqwest::Error),
+    Http(#[from] reqwest::Error),
 
     #[error("json deserialization error: {0:?}")]
     Json(#[from] serde_json::Error),

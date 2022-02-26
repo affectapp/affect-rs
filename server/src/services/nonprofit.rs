@@ -1,6 +1,6 @@
 use affect_api::affect::{nonprofit_service_server::NonprofitService, ListNonprofitsRequest, *};
 use affect_storage::{
-    page_token::PageToken,
+    page_token::{PageToken, PageTokenable},
     stores::nonprofit::{NonprofitPageToken, NonprofitRow, NonprofitStore},
 };
 use async_trait::async_trait;
@@ -49,30 +49,30 @@ impl NonprofitService for NonprofitServiceImpl {
         &self,
         request: Request<ListNonprofitsRequest>,
     ) -> Result<Response<ListNonprofitsResponse>, Status> {
-        let page_size = min(max(request.get_ref().page_size, 10), 100);
-        let page_token =
-            NonprofitPageToken::deserialize_from_page_token(&request.get_ref().page_token)
-                .or(Err(Status::invalid_argument("'page_token' is invalid")))?;
+        let message = request.into_inner();
+
+        let page_size = min(max(message.page_size, 10), 100);
+        let page_token = NonprofitPageToken::deserialize_page_token(&message.page_token)
+            .map_err(|e| Status::invalid_argument(format!("'page_token' is invalid: {:?}", e)))?;
 
         let (rows_plus_one, total_count) = self
             .nonprofit_store
             .list_and_count_nonprofits((page_size + 1).into(), page_token)
             .await?;
 
-        let (rows, extra_rows) =
+        let (page_rows, next_page_rows) =
             rows_plus_one.split_at(min(rows_plus_one.len(), page_size as usize));
 
         // Map rows to protos and serialize page token.
-        let nonprofits = rows
+        let nonprofits = page_rows
             .iter()
             .map(|row| nonprofit_row_to_proto(row.clone()))
             .collect();
-        let next_page_token = extra_rows
+
+        // Next page token or empty string.
+        let next_page_token = next_page_rows
             .first()
-            .map(|next_row| {
-                let next_page_token: NonprofitPageToken = next_row.clone().into();
-                next_page_token.serialize_as_page_token()
-            })
+            .map(|next_row| next_row.page_token().serialize_page_token())
             .unwrap_or(Ok("".to_string()))?;
 
         Ok(Response::new(ListNonprofitsResponse {
