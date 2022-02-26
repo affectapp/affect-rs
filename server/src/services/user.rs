@@ -1,6 +1,6 @@
 use crate::firebase::FirebaseAuth;
 use affect_api::affect::{get_user_request::Identifier, user_service_server::UserService, *};
-use affect_storage::user::{NewUserRow, UserRow, UserStore};
+use affect_storage::stores::user::{NewUserRow, UserRow, UserStore};
 use chrono::Utc;
 use prost_types::Timestamp;
 use std::sync::Arc;

@@ -176,7 +176,7 @@ impl ChangeApi {
         if status.is_client_error() {
             let error_response = response.json::<ErrorResponse>().await?;
             Err(Error::ClientError {
-                status: status,
+                status,
                 code: error_response.code,
                 title: error_response.title,
             })
@@ -188,9 +188,9 @@ impl ChangeApi {
 
 #[derive(Deserialize, Debug)]
 pub struct ErrorResponse {
-    status: u16,
-    code: String,
-    title: String,
+    pub status: u16,
+    pub code: String,
+    pub title: String,
 }
 
 #[derive(Serialize, Builder, Default, Debug)]

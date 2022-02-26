@@ -4,7 +4,7 @@ name = "affect-server"
 version = "0.1.0"
 
 [dependencies]
-affect-api = { git = "https://github.com/affectapp/api", rev = "1342bed2" }
+affect-api = { git = "https://github.com/affectapp/api", rev = "f37034f3" }
 affect-storage = { path = "../storage" }
 async-trait = "0.1"
 base64 = "0.13"
@@ -17,7 +17,7 @@ prost-types = "0.9"
 serde = "1.0"
 serde_json = "1.0"
 thiserror = "1.0"
-tokio = { version = "1.16", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.17", features = ["macros", "rt-multi-thread"] }
 toml = "0.5"
 tonic = "0.6"
 tonic-reflection = "0.3.0"

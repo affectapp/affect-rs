@@ -1,13 +1,13 @@
 use affect_api::affect::user_service_server::UserServiceServer;
 use affect_server::{
-    change::{ChangeApi, ChangeCredentials, SearchNonprofitsRequestBuilder},
+    change::{ChangeApi, ChangeCredentials},
     config::ServerConfig,
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
     services::user::UserServiceImpl,
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
-use affect_storage::{user::PgUserStore, PgPool};
+use affect_storage::{stores::user::PgUserStore, PgPool};
 use log::info;
 use std::{sync::Arc, time::Duration};
 use tonic::transport::Server;

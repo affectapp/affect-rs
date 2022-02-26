@@ -4,7 +4,7 @@
 export PORT=8080
 export ENVOY_ADMIN_PORT=9901
 export AFFECT_PORT=50051
-export CONFIG=`cat ./server/config.toml`
+export CONFIG=`cat ./server/affect.toml`
 
 # Build image.
 docker build -t affect-server .

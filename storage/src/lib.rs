@@ -1,7 +1,11 @@
 use affect_status::Status;
-use sqlx::{migrate::MigrateError, postgres::PgPoolOptions, Pool, Postgres};
+use sqlx::{
+    migrate::MigrateError,
+    postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
+    Pool, Postgres,
+};
 
-pub mod user;
+pub mod stores;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -24,6 +28,7 @@ pub struct PgPool {
 
 impl PgPool {
     pub async fn connect(postgres_uri: String) -> Result<Self, Error> {
+        // let connect_options = PgConnectOptions::new();
         let inner = PgPoolOptions::new()
             .max_connections(2)
             .connect(&postgres_uri)
