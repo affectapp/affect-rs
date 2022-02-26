@@ -1,9 +1,8 @@
 use affect_storage::PgPool;
 use testcontainers::{
     clients::Cli,
-    core::Port,
     images::generic::{GenericImage, WaitFor},
-    Container, Docker, RunArgs,
+    Container, Docker,
 };
 
 pub struct PgContainer<'a> {
@@ -11,6 +10,7 @@ pub struct PgContainer<'a> {
 
     // Owns container instance because when container is dropped, the
     // container is stopped.
+    #[allow(dead_code)]
     container: Container<'a, Cli, GenericImage>,
 }
 

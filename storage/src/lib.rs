@@ -1,10 +1,7 @@
 use affect_status::Status;
-use sqlx::{
-    migrate::MigrateError,
-    postgres::{PgConnectOptions, PgPoolOptions, PgSslMode},
-    Pool, Postgres,
-};
+use sqlx::{migrate::MigrateError, postgres::PgPoolOptions, Pool, Postgres};
 
+pub mod page_token;
 pub mod stores;
 
 #[derive(thiserror::Error, Debug)]
@@ -14,6 +11,15 @@ pub enum Error {
 
     #[error("migration failed: {0:?}")]
     Migrate(#[from] MigrateError),
+
+    #[error("json serialize/deserialize failed: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("not utf8: {0}")]
+    Utf8(#[from] std::str::Utf8Error),
+
+    #[error("unable to decode: {0}")]
+    Decode(#[from] base64::DecodeError),
 }
 
 impl From<Error> for Status {

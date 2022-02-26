@@ -1,13 +1,18 @@
-use affect_api::affect::user_service_server::UserServiceServer;
+use affect_api::affect::{
+    nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
+};
 use affect_server::{
     change::{ChangeApi, ChangeCredentials},
     config::ServerConfig,
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
-    services::user::UserServiceImpl,
+    services::{nonprofit::NonprofitServiceImpl, user::UserServiceImpl},
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
-use affect_storage::{stores::user::PgUserStore, PgPool};
+use affect_storage::{
+    stores::{nonprofit::PgNonprofitStore, user::PgUserStore},
+    PgPool,
+};
 use log::info;
 use std::{sync::Arc, time::Duration};
 use tonic::transport::Server;
@@ -42,6 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Connecting to database");
     let pool = Arc::new(PgPool::connect(config.postgres.uri).await?);
     let user_store = Arc::new(PgUserStore::new(pool.clone()));
+    let nonprofit_store = Arc::new(PgNonprofitStore::new(pool.clone()));
 
     info!("Running migrations (if any)");
     pool.run_migrations().await?;
@@ -69,6 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .register_encoded_file_descriptor_set(affect_api::FILE_DESCRIPTOR_SET)
         .build()?;
     let user_service = UserServiceImpl::new(user_store.clone(), firebase_auth.clone());
+    let nonprofit_service = NonprofitServiceImpl::new(nonprofit_store.clone());
 
     let addr = format!("0.0.0.0:{0}", config.port).parse()?;
     info!("Starting server: {:?}", addr);
@@ -76,6 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(middleware)
         .add_service(reflection_service)
         .add_service(UserServiceServer::new(user_service))
+        .add_service(NonprofitServiceServer::new(nonprofit_service))
         .serve(addr)
         .await?;
 

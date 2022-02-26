@@ -7,7 +7,7 @@ version = "0.1.0"
 affect-status = { path = "../status" }
 async-trait = "0.1"
 base64 = "0.13"
-chrono = { version = "0.4" }
+chrono = { version = "0.4", features = ["serde"] }
 futures = "0.3"
 sqlx = { version = "0.5", features = [
   "uuid",
@@ -19,6 +19,8 @@ sqlx = { version = "0.5", features = [
 ] }
 thiserror = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
+serde = "1.0"
+serde_json = "1.0"
 
 [dev-dependencies]
 testcontainers = "0.12"
