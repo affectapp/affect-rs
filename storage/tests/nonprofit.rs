@@ -7,7 +7,7 @@ use uuid::Uuid;
 mod common;
 
 #[tokio::test]
-async fn create_nonprofit() -> Result<(), Box<dyn std::error::Error>> {
+async fn create_nonprofit() -> Result<(), anyhow::Error> {
     let docker_cli = Cli::default();
     let pg_container = common::setup_pg_container(&docker_cli).await?;
     let nonprofit_store = PgNonprofitStore::new(Arc::new(pg_container.pool));

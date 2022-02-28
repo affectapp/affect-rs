@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row};
+use sqlx::FromRow;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -71,45 +71,42 @@ impl PgNonprofitStore {
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
     ) -> Result<Vec<NonprofitRow>, Error> {
-        match page_token {
-            Some(page_token) => Ok(sqlx::query_as(
-                "SELECT * \
-                FROM nonprofits \
-                WHERE (create_time) >= ($1) \
-                ORDER BY create_time ASC \
-                LIMIT $2",
-            )
-            .bind(page_token.create_time)
-            .bind(page_size)
-            .fetch_all(self.pool.inner())
-            .await?),
-            None => Ok(sqlx::query_as(
-                "SELECT * \
-                FROM nonprofits \
-                ORDER BY create_time ASC \
-                LIMIT $1",
-            )
-            .bind(page_size)
-            .fetch_all(self.pool.inner())
-            .await?),
-        }
+        let rows = match page_token {
+            Some(page_token) => {
+                // Query by page token:
+                sqlx::query_file_as!(
+                    NonprofitRow,
+                    "queries/nonprofit/list_at_page.sql",
+                    page_token.create_time,
+                    page_size,
+                )
+                .fetch_all(self.pool.inner())
+                .await?
+            }
+            None => {
+                // Query first page:
+                sqlx::query_file_as!(NonprofitRow, "queries/nonprofit/list.sql", page_size)
+                    .fetch_all(self.pool.inner())
+                    .await?
+            }
+        };
+        Ok(rows)
     }
 
     async fn _count_nonprofits(&self) -> Result<i64, Error> {
-        Ok(sqlx::query(
-            "SELECT COUNT(*) \
-            FROM nonprofits",
-        )
-        .fetch_one(self.pool.inner())
-        .await?
-        .try_get(0)?)
+        Ok(sqlx::query_file!("queries/nonprofit/count.sql")
+            .fetch_one(self.pool.inner())
+            .await?
+            .count
+            .expect("null count query"))
     }
 }
 
 #[async_trait]
 impl NonprofitStore for PgNonprofitStore {
     async fn add_nonprofit(&self, new_profit: NewNonprofitRow) -> Result<NonprofitRow, Error> {
-        Ok(sqlx::query_as(
+        Ok(sqlx::query_as!(
+            NonprofitRow,
             r#"
             INSERT INTO nonprofits (
                 create_time, 
@@ -122,16 +119,17 @@ impl NonprofitStore for PgNonprofitStore {
                 category
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING *"#,
+            RETURNING *
+            "#,
+            &new_profit.create_time,
+            &new_profit.update_time,
+            &new_profit.change_nonprofit_id,
+            &new_profit.icon_url,
+            &new_profit.title,
+            &new_profit.ein,
+            &new_profit.mission,
+            &new_profit.category,
         )
-        .bind(&new_profit.create_time)
-        .bind(&new_profit.update_time)
-        .bind(&new_profit.change_nonprofit_id)
-        .bind(&new_profit.icon_url)
-        .bind(&new_profit.title)
-        .bind(&new_profit.ein)
-        .bind(&new_profit.mission)
-        .bind(&new_profit.category)
         .fetch_one(self.pool.inner())
         .await?)
     }

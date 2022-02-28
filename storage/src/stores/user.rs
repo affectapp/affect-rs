@@ -25,7 +25,7 @@ pub struct NewUserRow {
 pub trait UserStore: Sync + Send {
     async fn add_user(&self, new_user: NewUserRow) -> Result<UserRow, Error>;
 
-    async fn get_user_by_firebase_uid(
+    async fn find_user_by_firebase_uid(
         &self,
         firebase_uid: String,
     ) -> Result<Option<UserRow>, Error>;
@@ -44,29 +44,27 @@ impl PgUserStore {
 #[async_trait]
 impl UserStore for PgUserStore {
     async fn add_user(&self, new_user: NewUserRow) -> Result<UserRow, Error> {
-        Ok(sqlx::query_as(
-            "INSERT INTO users (create_time, update_time, firebase_uid, firebase_email) \
-            VALUES ($1, $2, $3, $4) \
-            RETURNING *",
+        Ok(sqlx::query_file_as!(
+            UserRow,
+            "queries/user/insert.sql",
+            &new_user.create_time,
+            &new_user.update_time,
+            &new_user.firebase_uid,
+            &new_user.firebase_email,
         )
-        .bind(&new_user.create_time)
-        .bind(&new_user.update_time)
-        .bind(&new_user.firebase_uid)
-        .bind(&new_user.firebase_email)
         .fetch_one(self.pool.inner())
         .await?)
     }
 
-    async fn get_user_by_firebase_uid(
+    async fn find_user_by_firebase_uid(
         &self,
         firebase_uid: String,
     ) -> Result<Option<UserRow>, Error> {
-        Ok(sqlx::query_as(
-            "SELECT * \
-            FROM users \
-            WHERE firebase_uid = $1",
+        Ok(sqlx::query_file_as!(
+            UserRow,
+            "queries/user/find_by_firebase_uid.sql",
+            &firebase_uid,
         )
-        .bind(firebase_uid)
         .fetch_optional(self.pool.inner())
         .await?)
     }

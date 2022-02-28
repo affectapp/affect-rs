@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use affect_status::Status;
 use sqlx::{migrate::MigrateError, postgres::PgPoolOptions, Pool, Postgres};
 
@@ -39,6 +41,7 @@ impl PgPool {
         // let connect_options = PgConnectOptions::new();
         let inner = PgPoolOptions::new()
             .max_connections(2)
+            .connect_timeout(Duration::from_secs(5))
             .connect(&postgres_uri)
             .await?;
         Ok(Self { inner })

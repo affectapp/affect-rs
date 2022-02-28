@@ -1,6 +1,12 @@
+port = 50051
+
 [postgres]
 uri = "postgres://"
 
 [firebase]
 gwk-url = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
 project-id = "affect-app"
+
+[change]
+public-key = "pk_test_xyz"
+secret-key = "sk_test_xyz"

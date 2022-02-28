@@ -58,7 +58,7 @@ impl AuthnInterceptor {
                         })?;
                     let user_row = self
                         .user_store
-                        .get_user_by_firebase_uid(decoded_id_token.uid)
+                        .find_user_by_firebase_uid(decoded_id_token.uid)
                         .await?
                         .ok_or(Status::unauthenticated("end user not found"))?;
                     Peer::User(user_row)

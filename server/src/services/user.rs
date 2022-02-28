@@ -66,7 +66,7 @@ impl UserService for UserServiceImpl {
         let user_row = match message.identifier {
             Some(Identifier::FirebaseUserId(firebase_user_id)) => Ok(self
                 .user_store
-                .get_user_by_firebase_uid(firebase_user_id)
+                .find_user_by_firebase_uid(firebase_user_id)
                 .await?),
             Some(Identifier::UserId(_)) => todo!(),
             None => Err(Status::invalid_argument("must specify identifier")),

@@ -4,7 +4,7 @@ use testcontainers::clients::Cli;
 mod common;
 
 #[tokio::test]
-async fn pg_pool_provides_connection() -> Result<(), Box<dyn std::error::Error>> {
+async fn pg_pool_provides_connection() -> Result<(), anyhow::Error> {
     let docker_cli = Cli::default();
     let pg_container = common::setup_pg_container(&docker_cli).await?;
     let pg_pool = pg_container.pool;

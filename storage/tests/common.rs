@@ -1,4 +1,5 @@
 use affect_storage::PgPool;
+use anyhow::Context;
 use testcontainers::{
     clients::Cli,
     images::generic::{GenericImage, WaitFor},
@@ -15,9 +16,7 @@ pub struct PgContainer<'a> {
 }
 
 // Starts a postgres instance via docker and opens a connection pool.
-pub async fn setup_pg_container<'a>(
-    docker_cli: &'a Cli,
-) -> Result<PgContainer<'a>, Box<dyn std::error::Error>> {
+pub async fn setup_pg_container<'a>(docker_cli: &'a Cli) -> Result<PgContainer<'a>, anyhow::Error> {
     let db = "postgres-db-test";
     let user = "postgres-user-test";
     let password = "postgres-password-test";
@@ -38,7 +37,7 @@ pub async fn setup_pg_container<'a>(
         password,
         container
             .get_host_port(5432)
-            .ok_or("failed getting host port")?,
+            .context("failed getting postgres container port")?,
         db
     );
 
