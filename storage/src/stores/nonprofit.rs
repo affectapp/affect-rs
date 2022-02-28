@@ -105,22 +105,9 @@ impl PgNonprofitStore {
 #[async_trait]
 impl NonprofitStore for PgNonprofitStore {
     async fn add_nonprofit(&self, new_profit: NewNonprofitRow) -> Result<NonprofitRow, Error> {
-        Ok(sqlx::query_as!(
+        Ok(sqlx::query_file_as!(
             NonprofitRow,
-            r#"
-            INSERT INTO nonprofits (
-                create_time, 
-                update_time, 
-                change_nonprofit_id,
-                icon_url,
-                title,
-                ein,
-                mission,
-                category
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING *
-            "#,
+            "queries/nonprofit/insert.sql",
             &new_profit.create_time,
             &new_profit.update_time,
             &new_profit.change_nonprofit_id,
