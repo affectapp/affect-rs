@@ -1,0 +1,324 @@
+{
+  "db": "PostgreSQL",
+  "0649ba1d15475426ed7de7e044e1447ee023317e9469303857150b406a3cf98b": {
+    "query": "\n            INSERT INTO nonprofits (\n                create_time, \n                update_time, \n                change_nonprofit_id,\n                icon_url,\n                title,\n                ein,\n                mission,\n                category\n            )\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n            RETURNING *\n            ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "change_nonprofit_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "icon_url",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "title",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "ein",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 7,
+          "name": "mission",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 8,
+          "name": "category",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Timestamptz",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "44821bac945efa0b5c510d4c6b1dc2699d709cdb5fbf71d11734237e19b017f5": {
+    "query": "SELECT COUNT(*) AS count\nFROM nonprofits;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
+  "4cbb8941572485531e3ff9784ef6a413309954289065c40f7e22f22059c572b9": {
+    "query": "INSERT INTO users (\n    create_time,\n    update_time,\n    firebase_uid,\n    firebase_email\n  )\nVALUES ($1, $2, $3, $4)\nRETURNING *",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "firebase_uid",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "firebase_email",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Timestamptz",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "6c53ba4fb48fc52228c3fcbd48bfb4175241175c861687ef82b28e973fa58d97": {
+    "query": "SELECT *\nFROM nonprofits\nORDER BY create_time ASC\nLIMIT $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "change_nonprofit_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "icon_url",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "title",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "ein",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 7,
+          "name": "mission",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 8,
+          "name": "category",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "85ea5bd9815a9352d99b68d2c3f78205d2890c6d7b234ae4199849f9cc8be361": {
+    "query": "SELECT *\nFROM users\nWHERE firebase_uid = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "firebase_uid",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "firebase_email",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "dcaa235e83f22d5013a07fccd6c9b3a4c1a1ec5bd3c0d6a4f087b52249acb7d8": {
+    "query": "SELECT *\nFROM nonprofits\nWHERE (create_time) >= ($1)\nORDER BY create_time ASC\nLIMIT $2",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "change_nonprofit_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "icon_url",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "title",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "ein",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 7,
+          "name": "mission",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 8,
+          "name": "category",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  }
+}
