@@ -21,6 +21,7 @@ pub struct NonprofitRow {
     pub category: String,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct NewNonprofitRow {
     pub create_time: DateTime<Utc>,
     pub update_time: DateTime<Utc>,
@@ -50,11 +51,23 @@ impl PageTokenable<NonprofitPageToken> for NonprofitRow {
 pub trait NonprofitStore: Sync + Send {
     async fn add_nonprofit(&self, new_nonprofit: NewNonprofitRow) -> Result<NonprofitRow, Error>;
 
+    async fn list_nonprofits(
+        &self,
+        page_size: i64,
+        page_token: Option<NonprofitPageToken>,
+    ) -> Result<Vec<NonprofitRow>, Error>;
+
+    async fn count_nonprofits(&self) -> Result<i64, Error>;
+
     async fn list_and_count_nonprofits(
         &self,
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
-    ) -> Result<(Vec<NonprofitRow>, i64), Error>;
+    ) -> Result<(Vec<NonprofitRow>, i64), Error> {
+        let list_fut = self.list_nonprofits(page_size, page_token);
+        let count_fut = self.count_nonprofits();
+        futures::try_join!(list_fut, count_fut)
+    }
 }
 
 pub struct PgNonprofitStore {
@@ -65,8 +78,28 @@ impl PgNonprofitStore {
     pub fn new(pool: Arc<PgPool>) -> Self {
         Self { pool }
     }
+}
 
-    async fn _list_nonprofits(
+#[async_trait]
+impl NonprofitStore for PgNonprofitStore {
+    async fn add_nonprofit(&self, new_profit: NewNonprofitRow) -> Result<NonprofitRow, Error> {
+        Ok(sqlx::query_file_as!(
+            NonprofitRow,
+            "queries/nonprofit/insert.sql",
+            &new_profit.create_time,
+            &new_profit.update_time,
+            &new_profit.change_nonprofit_id,
+            &new_profit.icon_url,
+            &new_profit.title,
+            &new_profit.ein,
+            &new_profit.mission,
+            &new_profit.category,
+        )
+        .fetch_one(self.pool.inner())
+        .await?)
+    }
+
+    async fn list_nonprofits(
         &self,
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
@@ -93,41 +126,11 @@ impl PgNonprofitStore {
         Ok(rows)
     }
 
-    async fn _count_nonprofits(&self) -> Result<i64, Error> {
+    async fn count_nonprofits(&self) -> Result<i64, Error> {
         Ok(sqlx::query_file!("queries/nonprofit/count.sql")
             .fetch_one(self.pool.inner())
             .await?
             .count
             .expect("null count query"))
-    }
-}
-
-#[async_trait]
-impl NonprofitStore for PgNonprofitStore {
-    async fn add_nonprofit(&self, new_profit: NewNonprofitRow) -> Result<NonprofitRow, Error> {
-        Ok(sqlx::query_file_as!(
-            NonprofitRow,
-            "queries/nonprofit/insert.sql",
-            &new_profit.create_time,
-            &new_profit.update_time,
-            &new_profit.change_nonprofit_id,
-            &new_profit.icon_url,
-            &new_profit.title,
-            &new_profit.ein,
-            &new_profit.mission,
-            &new_profit.category,
-        )
-        .fetch_one(self.pool.inner())
-        .await?)
-    }
-
-    async fn list_and_count_nonprofits(
-        &self,
-        page_size: i64,
-        page_token: Option<NonprofitPageToken>,
-    ) -> Result<(Vec<NonprofitRow>, i64), Error> {
-        let list_fut = self._list_nonprofits(page_size, page_token);
-        let count_fut = self._count_nonprofits();
-        futures::try_join!(list_fut, count_fut)
     }
 }

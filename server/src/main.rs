@@ -2,9 +2,11 @@ use affect_api::affect::{
     nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
 };
 use affect_server::{
+    change::api::{ChangeApi, ChangeCredentials},
     config::ServerConfig,
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
+    seed,
     services::{nonprofit::NonprofitServiceImpl, user::UserServiceImpl},
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
@@ -54,10 +56,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Dependencies:
     let firebase_auth =
         Arc::new(FirebaseAuth::load(config.firebase.gwk_url, config.firebase.project_id).await?);
-    // let change_api = Arc::new(ChangeApi::new(ChangeCredentials::new(
-    //     config.change.public_key,
-    //     config.change.secret_key,
-    // )));
+    let change_api = Arc::new(ChangeApi::new(ChangeCredentials::new(
+        config.change.public_key,
+        config.change.secret_key,
+    )));
+
+    seed::insert_nonprofit(nonprofit_store.clone(), change_api).await?;
 
     // Interceptors/middleware:
     let authn_interceptor_layer = AsyncInterceptorLayer::new(AuthnInterceptor::new(
