@@ -6,7 +6,7 @@ CREATE TABLE nonprofits (
   icon_url VARCHAR(255) NOT NULL,
   title VARCHAR(255) NOT NULL,
   ein VARCHAR(255) NOT NULL,
-  mission VARCHAR(255) NOT NULL,
+  mission TEXT NOT NULL,
   category VARCHAR(255) NOT NULL,
   PRIMARY KEY (nonprofit_id)
 );

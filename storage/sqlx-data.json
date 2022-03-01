@@ -107,7 +107,7 @@
         {
           "ordinal": 7,
           "name": "mission",
-          "type_info": "Varchar"
+          "type_info": "Text"
         },
         {
           "ordinal": 8,
@@ -219,7 +219,7 @@
         {
           "ordinal": 7,
           "name": "mission",
-          "type_info": "Varchar"
+          "type_info": "Text"
         },
         {
           "ordinal": 8,
@@ -235,7 +235,7 @@
           "Varchar",
           "Varchar",
           "Varchar",
-          "Varchar",
+          "Text",
           "Varchar"
         ]
       },
@@ -294,7 +294,7 @@
         {
           "ordinal": 7,
           "name": "mission",
-          "type_info": "Varchar"
+          "type_info": "Text"
         },
         {
           "ordinal": 8,

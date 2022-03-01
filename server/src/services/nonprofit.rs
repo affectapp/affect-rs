@@ -51,7 +51,7 @@ impl NonprofitService for NonprofitServiceImpl {
     ) -> Result<Response<ListNonprofitsResponse>, Status> {
         let message = request.into_inner();
 
-        let page_size = min(max(message.page_size, 10), 100);
+        let page_size = min(max(message.page_size, 1), 100);
         let page_token = NonprofitPageToken::deserialize_page_token(&message.page_token)
             .map_err(|e| Status::invalid_argument(format!("'page_token' is invalid: {:?}", e)))?;
 
