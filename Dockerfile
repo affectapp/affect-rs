@@ -33,15 +33,21 @@ FROM envoyproxy/envoy:v1.12.2 AS envoy
 
 # Runtime for the server and envoy.
 FROM debian:buster-slim
-ENV RUST_LOG=debug
+ENV RUST_LOG=info
+ENV PORT=8080
+ENV AFFECT_SERVER_PORT=50051
+ENV ENVOY_ADMIN_PORT=9901
 WORKDIR /app
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
+  libssl-dev \
+  ca-certificates \
+  gettext-base \
+  netcat
 COPY --from=builder /builder/target/release/affect-server .
 COPY --from=envoy /usr/local/bin/envoy .
 COPY ./envoy.yaml ./
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends libssl-dev ca-certificates gettext-base
+COPY ./entrypoint.sh ./
 # Start envoy in the background (with env variables in config), and
 # affect in the foreground.
-ENTRYPOINT envsubst < ./envoy.yaml > ./envoy-final.yaml && \
-  ./envoy --config-path ./envoy-final.yaml --service-cluster backend-proxy & \
-  ./affect-server
+ENTRYPOINT ./entrypoint.sh

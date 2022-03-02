@@ -6,13 +6,16 @@ use log::debug;
 use std::sync::Arc;
 
 // Seeds change table with some real data.
-pub async fn insert_nonprofit(
+pub async fn insert_nonprofits(
     nonprofit_store: Arc<PgNonprofitStore>,
     api: Arc<ChangeApi>,
 ) -> Result<(), anyhow::Error> {
     let existing_nonprofits = nonprofit_store.list_nonprofits(20, None).await?;
     if existing_nonprofits.len() >= 10 {
-        debug!("Nonprofits already seeded: {:?}", existing_nonprofits);
+        debug!(
+            "Num nonprofits already seeded: {:?}",
+            existing_nonprofits.len()
+        );
         return Ok(());
     }
 

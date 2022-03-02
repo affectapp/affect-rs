@@ -1,14 +1,17 @@
 use serde::Deserialize;
 
 #[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct ServerConfig {
-    pub port: u16,
+    pub port: Option<u16>,
+    pub port_env_var: Option<String>,
     pub postgres: PostgresConfig,
     pub firebase: FirebaseConfig,
     pub change: ChangeConfig,
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct PostgresConfig {
     pub uri: String,
 }

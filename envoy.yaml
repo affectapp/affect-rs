@@ -4,7 +4,7 @@
 admin:
   access_log_path: /tmp/admin_access.log
   address:
-    socket_address: { address: 0.0.0.0, port_value: 9901 }
+    socket_address: { address: 0.0.0.0, port_value: '${ENVOY_ADMIN_PORT}' }
 
 static_resources:
   listeners:
@@ -26,7 +26,7 @@ static_resources:
                       routes:
                         - match: { prefix: "/" }
                           route:
-                            cluster: grpc_server
+                            cluster: affect_server
                             max_grpc_timeout: 0s
                       cors:
                         allow_origin_string_match:
@@ -40,9 +40,12 @@ static_resources:
                   - name: envoy.cors
                   - name: envoy.router
   clusters:
-    - name: grpc_server
+    - name: affect_server
       connect_timeout: 0.25s
       type: logical_dns
       http2_protocol_options: {}
       lb_policy: round_robin
-      hosts: [{ socket_address: { address: 0.0.0.0, port_value: 50051 }}]
+      hosts: 
+        - socket_address:
+            address: 0.0.0.0
+            port_value: '${AFFECT_SERVER_PORT}'

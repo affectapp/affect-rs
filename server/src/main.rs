@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.change.secret_key,
     )));
 
-    seed::insert_nonprofit(nonprofit_store.clone(), change_api).await?;
+    seed::insert_nonprofits(nonprofit_store.clone(), change_api).await?;
 
     // Interceptors/middleware:
     let authn_interceptor_layer = AsyncInterceptorLayer::new(AuthnInterceptor::new(
@@ -80,7 +80,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let user_service = UserServiceImpl::new(user_store.clone(), firebase_auth.clone());
     let nonprofit_service = NonprofitServiceImpl::new(nonprofit_store.clone());
 
-    let addr = format!("0.0.0.0:{0}", config.port).parse()?;
+    let port: u16 = match (config.port, config.port_env_var) {
+        (None, Some(port_env_var)) => std::env::var(port_env_var)?.parse()?,
+        (Some(port), None) => port,
+        _ => panic!("test"),
+    };
+    let addr = format!("0.0.0.0:{0}", port).parse()?;
     info!("Starting server: {:?}", addr);
     Server::builder()
         .layer(middleware)
