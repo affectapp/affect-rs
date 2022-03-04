@@ -135,80 +135,6 @@
       ]
     }
   },
-  "0f9841ea53d316d1aeb6b0da633570f779c1560915f8907190ab0602db21352c": {
-    "query": "SELECT COUNT(*) AS count\nFROM accounts;",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "count",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": []
-      },
-      "nullable": [
-        null
-      ]
-    }
-  },
-  "24f27b8efdd2323bfd26187bf82ca884d664d3e1288b2aeb6ffd1cd37cbd41f9": {
-    "query": "SELECT *\nFROM accounts\nORDER BY create_time ASC\nLIMIT $1",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "account_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "item_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "plaid_account_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "mask",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true
-      ]
-    }
-  },
   "2c72b704e61b2ac28552efc7ab16d58b01ebf2b89cc0219a76acd25cbf67611c": {
     "query": "SELECT *\nFROM items\nWHERE (create_time) >= ($1)\n  AND user_id = $3\nORDER BY create_time ASC\nLIMIT $2",
     "describe": {
@@ -258,6 +184,62 @@
         false,
         false,
         false
+      ]
+    }
+  },
+  "317216a5c18c8ee0734d07602cb4dabdd3887d549eaf75747d9345cfad60d26b": {
+    "query": "SELECT *\nFROM accounts\nWHERE item_id = $1\nORDER BY create_time ASC",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "account_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "item_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "plaid_account_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "mask",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
       ]
     }
   },
@@ -561,63 +543,6 @@
         false,
         false,
         false
-      ]
-    }
-  },
-  "dc862d5ac99b53270cfbfdec9fd012bcc77a2f2c7b5a6a18a3ce2c037a723c60": {
-    "query": "SELECT *\nFROM accounts\nWHERE (create_time) >= ($1)\nORDER BY create_time ASC\nLIMIT $2",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "account_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "item_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "plaid_account_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "mask",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Timestamptz",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true
       ]
     }
   },
