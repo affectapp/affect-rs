@@ -35,7 +35,7 @@ pub async fn insert_nonprofits(
             update_time: now,
             change_nonprofit_id: change_nonprofit.id,
             icon_url: change_nonprofit.icon_url,
-            title: change_nonprofit.name,
+            name: change_nonprofit.name,
             ein: change_nonprofit.ein,
             mission: change_nonprofit.mission,
             category: change_nonprofit.category,

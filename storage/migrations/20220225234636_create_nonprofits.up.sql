@@ -4,7 +4,7 @@ CREATE TABLE nonprofits (
   update_time TIMESTAMPTZ NOT NULL,
   change_nonprofit_id VARCHAR(255) NOT NULL UNIQUE,
   icon_url VARCHAR(255) NOT NULL,
-  title VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
   ein VARCHAR(255) NOT NULL,
   mission TEXT NOT NULL,
   category VARCHAR(255) NOT NULL,

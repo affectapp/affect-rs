@@ -1,5 +1,6 @@
 use affect_api::affect::{
-    nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
+    item_service_server::ItemServiceServer, nonprofit_service_server::NonprofitServiceServer,
+    user_service_server::UserServiceServer,
 };
 use affect_server::{
     change::api::{ChangeApi, ChangeCredentials},
@@ -7,11 +8,11 @@ use affect_server::{
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
     seed,
-    services::{nonprofit::NonprofitServiceImpl, user::UserServiceImpl},
+    services::{item::ItemServiceImpl, nonprofit::NonprofitServiceImpl, user::UserServiceImpl},
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
 use affect_storage::{
-    stores::{nonprofit::PgNonprofitStore, user::PgUserStore},
+    stores::{item::PgItemStore, nonprofit::PgNonprofitStore, user::PgUserStore},
     PgPool,
 };
 use log::info;
@@ -49,6 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = Arc::new(PgPool::connect(config.postgres.uri).await?);
     let user_store = Arc::new(PgUserStore::new(pool.clone()));
     let nonprofit_store = Arc::new(PgNonprofitStore::new(pool.clone()));
+    let item_store = Arc::new(PgItemStore::new(pool.clone()));
 
     info!("Running migrations (if any)");
     pool.run_migrations().await?;
@@ -79,6 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
     let user_service = UserServiceImpl::new(user_store.clone(), firebase_auth.clone());
     let nonprofit_service = NonprofitServiceImpl::new(nonprofit_store.clone());
+    let item_service = ItemServiceImpl::new(item_store.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {
         (None, Some(port_env_var)) => std::env::var(port_env_var)?.parse()?,
@@ -92,6 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(reflection_service)
         .add_service(UserServiceServer::new(user_service))
         .add_service(NonprofitServiceServer::new(nonprofit_service))
+        .add_service(ItemServiceServer::new(item_service))
         .serve(addr)
         .await?;
 

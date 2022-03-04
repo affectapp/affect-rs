@@ -36,7 +36,7 @@ fn nonprofit_row_to_proto(row: NonprofitRow) -> Nonprofit {
         }),
         change_nonprofit_id: row.change_nonprofit_id,
         icon_url: row.icon_url,
-        title: row.title,
+        name: row.name,
         ein: row.ein,
         mission: row.mission,
         category: row.category,

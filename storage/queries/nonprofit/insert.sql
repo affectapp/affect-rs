@@ -4,7 +4,7 @@ INSERT INTO nonprofits (
     update_time,
     change_nonprofit_id,
     icon_url,
-    title,
+    name,
     ein,
     mission,
     category
