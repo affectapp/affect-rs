@@ -34,6 +34,7 @@ FROM envoyproxy/envoy:v1.12.2 AS envoy
 # Runtime for the server and envoy.
 FROM debian:buster-slim
 ENV RUST_LOG=info
+ENV RUST_BACKTRACE=true
 ENV PORT=8080
 ENV AFFECT_SERVER_PORT=50051
 ENV ENVOY_ADMIN_PORT=9901

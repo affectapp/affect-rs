@@ -52,8 +52,9 @@ impl ItemService for ItemServiceImpl {
         let page_size = min(max(message.page_size, 1), 100);
         let page_token = ItemPageToken::deserialize_page_token(&message.page_token)
             .map_err(|e| Status::invalid_argument(format!("'page_token' is invalid: {:?}", e)))?;
-        let user_id = message
-            .user_id
+        let user_id = Some(message.user_id)
+            .filter(|s| !s.is_empty())
+            .ok_or(Status::invalid_argument("'user_id' must be specified"))?
             .parse::<Uuid>()
             .map_err(|e| Status::invalid_argument(format!("'user_id' is invalid: {:?}", e)))?;
 

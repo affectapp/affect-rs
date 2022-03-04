@@ -38,8 +38,7 @@ fn load_config() -> Result<ServerConfig, Box<dyn std::error::Error>> {
     Ok(toml::from_str::<ServerConfig>(&config_str)?)
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn run() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
     info!("Loading config");
@@ -84,9 +83,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let item_service = ItemServiceImpl::new(item_store.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {
-        (None, Some(port_env_var)) => std::env::var(port_env_var)?.parse()?,
+        (None, Some(port_env_var)) => std::env::var(&port_env_var)?.parse()?,
         (Some(port), None) => port,
-        _ => panic!("test"),
+        _ => panic!("Expected"),
     };
     let addr = format!("0.0.0.0:{0}", port).parse()?;
     info!("Starting server: {:?}", addr);
@@ -99,5 +98,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .serve(addr)
         .await?;
 
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let result = run().await;
+    if result.is_err() {
+        panic!("Failed to run: {:?}", result);
+    }
     Ok(())
 }
