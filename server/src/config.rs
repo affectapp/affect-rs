@@ -8,6 +8,7 @@ pub struct ServerConfig {
     pub postgres: PostgresConfig,
     pub firebase: FirebaseConfig,
     pub change: ChangeConfig,
+    pub plaid: PlaidConfig,
 }
 
 #[derive(Deserialize)]
@@ -28,4 +29,12 @@ pub struct FirebaseConfig {
 pub struct ChangeConfig {
     pub public_key: String,
     pub secret_key: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct PlaidConfig {
+    pub client_id: String,
+    pub secret_key: String,
+    pub env: String,
 }

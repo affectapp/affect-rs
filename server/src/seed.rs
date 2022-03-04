@@ -1,4 +1,4 @@
-use crate::change::api::{ChangeApi, SearchNonprofitsRequestBuilder};
+use crate::change::api::{ChangeClient, SearchNonprofitsRequestBuilder};
 use affect_storage::stores::nonprofit::{NewNonprofitRow, NonprofitStore, PgNonprofitStore};
 use anyhow::Context;
 use chrono::Utc;
@@ -8,7 +8,7 @@ use std::sync::Arc;
 // Seeds change table with some real data.
 pub async fn insert_nonprofits(
     nonprofit_store: Arc<PgNonprofitStore>,
-    api: Arc<ChangeApi>,
+    api: Arc<ChangeClient>,
 ) -> Result<(), anyhow::Error> {
     let existing_nonprofits = nonprofit_store.list_nonprofits(20, None).await?;
     if existing_nonprofits.len() >= 10 {

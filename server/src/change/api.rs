@@ -18,14 +18,14 @@ impl ChangeCredentials {
     }
 }
 
-pub struct ChangeApi {
+pub struct ChangeClient {
     client: Client,
     creds: ChangeCredentials,
 }
 
-impl ChangeApi {
+impl ChangeClient {
     pub fn new(creds: ChangeCredentials) -> Self {
-        ChangeApi {
+        ChangeClient {
             client: Client::new(),
             creds,
         }

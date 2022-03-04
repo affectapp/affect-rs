@@ -4,7 +4,7 @@ name = "affect-server"
 version = "0.1.0"
 
 [dependencies]
-affect-api = { git = "https://github.com/affectapp/api", rev = "ef71b14" }
+affect-api = { git = "https://github.com/affectapp/api", rev = "3daf284" }
 affect-storage = { path = "../storage" }
 async-trait = "0.1"
 base64 = "0.13"
@@ -28,3 +28,4 @@ env_logger = "0.9"
 reqwest = "0.11"
 derive_builder = "0.10"
 anyhow = "1.0"
+plaid = { git = "https://github.com/affectapp/plaid.git", tag = "v0.5.0" }

@@ -3,7 +3,7 @@ use affect_api::affect::{
     user_service_server::UserServiceServer,
 };
 use affect_server::{
-    change::api::{ChangeApi, ChangeCredentials},
+    change::api::{ChangeClient, ChangeCredentials},
     config::ServerConfig,
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
@@ -12,7 +12,9 @@ use affect_server::{
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
 use affect_storage::{
-    stores::{item::PgItemStore, nonprofit::PgNonprofitStore, user::PgUserStore},
+    stores::{
+        account::PgAccountStore, item::PgItemStore, nonprofit::PgNonprofitStore, user::PgUserStore,
+    },
     PgPool,
 };
 use log::info;
@@ -50,6 +52,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let user_store = Arc::new(PgUserStore::new(pool.clone()));
     let nonprofit_store = Arc::new(PgNonprofitStore::new(pool.clone()));
     let item_store = Arc::new(PgItemStore::new(pool.clone()));
+    let account_store = Arc::new(PgAccountStore::new(pool.clone()));
 
     info!("Running migrations (if any)");
     pool.run_migrations().await?;
@@ -57,12 +60,18 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Dependencies:
     let firebase_auth =
         Arc::new(FirebaseAuth::load(config.firebase.gwk_url, config.firebase.project_id).await?);
-    let change_api = Arc::new(ChangeApi::new(ChangeCredentials::new(
+    let change_client = Arc::new(ChangeClient::new(ChangeCredentials::new(
         config.change.public_key,
         config.change.secret_key,
     )));
+    let plaid_client = Arc::new(plaid::Client::new(
+        config.plaid.client_id,
+        config.plaid.secret_key,
+        config.plaid.env.parse()?,
+    ));
 
-    seed::insert_nonprofits(nonprofit_store.clone(), change_api).await?;
+    // Seed database with data.
+    seed::insert_nonprofits(nonprofit_store.clone(), change_client).await?;
 
     // Interceptors/middleware:
     let authn_interceptor_layer = AsyncInterceptorLayer::new(AuthnInterceptor::new(
@@ -80,7 +89,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
     let user_service = UserServiceImpl::new(user_store.clone(), firebase_auth.clone());
     let nonprofit_service = NonprofitServiceImpl::new(nonprofit_store.clone());
-    let item_service = ItemServiceImpl::new(item_store.clone());
+    let item_service = ItemServiceImpl::new(
+        item_store.clone(),
+        account_store.clone(),
+        plaid_client.clone(),
+    );
 
     let port: u16 = match (config.port, config.port_env_var) {
         (None, Some(port_env_var)) => std::env::var(&port_env_var)?.parse()?,

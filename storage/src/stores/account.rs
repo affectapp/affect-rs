@@ -1,9 +1,6 @@
-use crate::page_token::PageTokenable;
 use crate::{Error, PgPool};
 use async_trait::async_trait;
-use chrono::serde::ts_nanoseconds;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -29,41 +26,11 @@ pub struct NewAccountRow {
     pub mask: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct AccountPageToken {
-    #[serde(with = "ts_nanoseconds")]
-    pub create_time: DateTime<Utc>,
-}
-
-impl PageTokenable<AccountPageToken> for AccountRow {
-    fn page_token(&self) -> AccountPageToken {
-        AccountPageToken {
-            create_time: self.create_time.clone(),
-        }
-    }
-}
-
 #[async_trait]
 pub trait AccountStore: Sync + Send {
     async fn add_account(&self, new_row: NewAccountRow) -> Result<AccountRow, Error>;
 
-    async fn list_accounts(
-        &self,
-        page_size: i64,
-        page_token: Option<AccountPageToken>,
-    ) -> Result<Vec<AccountRow>, Error>;
-
-    async fn count_accounts(&self) -> Result<i64, Error>;
-
-    async fn list_and_count_accounts(
-        &self,
-        page_size: i64,
-        page_token: Option<AccountPageToken>,
-    ) -> Result<(Vec<AccountRow>, i64), Error> {
-        let list_fut = self.list_accounts(page_size, page_token);
-        let count_fut = self.count_accounts();
-        futures::try_join!(list_fut, count_fut)
-    }
+    async fn list_accounts_for_item(&self, item_id: Uuid) -> Result<Vec<AccountRow>, Error>;
 }
 
 pub struct PgAccountStore {
@@ -93,38 +60,10 @@ impl AccountStore for PgAccountStore {
         .await?)
     }
 
-    async fn list_accounts(
-        &self,
-        page_size: i64,
-        page_token: Option<AccountPageToken>,
-    ) -> Result<Vec<AccountRow>, Error> {
-        let rows = match page_token {
-            Some(page_token) => {
-                // Query by page token:
-                sqlx::query_file_as!(
-                    AccountRow,
-                    "queries/account/list_at_page.sql",
-                    page_token.create_time,
-                    page_size,
-                )
-                .fetch_all(self.pool.inner())
-                .await?
-            }
-            None => {
-                // Query first page:
-                sqlx::query_file_as!(AccountRow, "queries/account/list.sql", page_size)
-                    .fetch_all(self.pool.inner())
-                    .await?
-            }
-        };
+    async fn list_accounts_for_item(&self, item_id: Uuid) -> Result<Vec<AccountRow>, Error> {
+        let rows = sqlx::query_file_as!(AccountRow, "queries/account/list_for_item.sql", item_id)
+            .fetch_all(self.pool.inner())
+            .await?;
         Ok(rows)
-    }
-
-    async fn count_accounts(&self) -> Result<i64, Error> {
-        Ok(sqlx::query_file!("queries/account/count.sql")
-            .fetch_one(self.pool.inner())
-            .await?
-            .count
-            .expect("null count query"))
     }
 }

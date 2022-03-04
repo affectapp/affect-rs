@@ -103,7 +103,7 @@ impl ItemStore for PgItemStore {
                 // Query by page token:
                 sqlx::query_file_as!(
                     ItemRow,
-                    "queries/item/list_at_page.sql",
+                    "queries/item/list_at_page_for_user.sql",
                     page_token.create_time,
                     page_size,
                     &user_id,
@@ -113,19 +113,26 @@ impl ItemStore for PgItemStore {
             }
             None => {
                 // Query first page:
-                sqlx::query_file_as!(ItemRow, "queries/item/list.sql", page_size, &user_id)
-                    .fetch_all(self.pool.inner())
-                    .await?
+                sqlx::query_file_as!(
+                    ItemRow,
+                    "queries/item/list_for_user.sql",
+                    page_size,
+                    &user_id
+                )
+                .fetch_all(self.pool.inner())
+                .await?
             }
         };
         Ok(rows)
     }
 
     async fn count_items_for_user(&self, user_id: Uuid) -> Result<i64, Error> {
-        Ok(sqlx::query_file!("queries/item/count.sql", &user_id)
-            .fetch_one(self.pool.inner())
-            .await?
-            .count
-            .expect("null count query"))
+        Ok(
+            sqlx::query_file!("queries/item/count_for_user.sql", &user_id)
+                .fetch_one(self.pool.inner())
+                .await?
+                .count
+                .expect("null count query"),
+        )
     }
 }
