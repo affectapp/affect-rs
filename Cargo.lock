@@ -1269,7 +1269,7 @@ checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
 [[package]]
 name = "plaid"
 version = "0.5.0"
-source = "git+https://github.com/affectapp/plaid.git?tag=v0.5.0#618ff9d1e3595f822d3591bd813f9eae9042f14e"
+source = "git+https://github.com/affectapp/plaid.git?rev=210f7f7#210f7f7f9507f184c6467d06133dd02d354f67d0"
 dependencies = [
  "chrono",
  "reqwest",

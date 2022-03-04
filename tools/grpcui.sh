@@ -1,6 +1,6 @@
 #!/bin/bash
-export AFFECT_SERVER_PORT=${AFFECT_SERVER_PORT:-50051}
+export PORT=${PORT:-8080}
 grpcui -plaintext \
   -bind localhost \
   -port 30031 \
-  "localhost:${AFFECT_SERVER_PORT}"
+  "localhost:${PORT}"
