@@ -115,6 +115,26 @@
       ]
     }
   },
+  "0c6887368c5afccb217e3571d8ba72bb40f24fde01c10e75195fd6bb4250e3c8": {
+    "query": "SELECT COUNT(*) AS count\nFROM items\nWHERE user_id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
   "0f9841ea53d316d1aeb6b0da633570f779c1560915f8907190ab0602db21352c": {
     "query": "SELECT COUNT(*) AS count\nFROM accounts;",
     "describe": {
@@ -130,56 +150,6 @@
       },
       "nullable": [
         null
-      ]
-    }
-  },
-  "18b8813c0e3d4ef41a32f49bf97b7781632e71afd5559f647efb2ffe5eb3e6bb": {
-    "query": "SELECT *\nFROM items\nORDER BY create_time ASC\nLIMIT $1",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "item_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "plaid_item_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "plaid_access_token",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
       ]
     }
   },
@@ -239,21 +209,55 @@
       ]
     }
   },
-  "2fb97e3334746217478f9d015e3e2882204ae07cf9eb034fe7a58bc131c39bd5": {
-    "query": "SELECT COUNT(*) AS count\nFROM items;",
+  "2c72b704e61b2ac28552efc7ab16d58b01ebf2b89cc0219a76acd25cbf67611c": {
+    "query": "SELECT *\nFROM items\nWHERE (create_time) >= ($1)\n  AND user_id = $3\nORDER BY create_time ASC\nLIMIT $2",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
-          "name": "count",
-          "type_info": "Int8"
+          "name": "item_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "plaid_item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "plaid_access_token",
+          "type_info": "Varchar"
         }
       ],
       "parameters": {
-        "Left": []
+        "Left": [
+          "Timestamptz",
+          "Int8",
+          "Uuid"
+        ]
       },
       "nullable": [
-        null
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ]
     }
   },
@@ -434,57 +438,6 @@
       ]
     }
   },
-  "9a8360c1836cd3dc2e79558e0b73f7ab58e08eaa3ef2af1186de99ff3a232976": {
-    "query": "SELECT *\nFROM items\nWHERE (create_time) >= ($1)\nORDER BY create_time ASC\nLIMIT $2",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "item_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "plaid_item_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "plaid_access_token",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Timestamptz",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "ab949056689a4e2c7745c38838b4ab2bc37855f6da08eade042b387921ddaff1": {
     "query": "INSERT INTO nonprofits (\n    nonprofit_id,\n    create_time,\n    update_time,\n    change_nonprofit_id,\n    icon_url,\n    name,\n    ein,\n    mission,\n    category\n  )\nVALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)\nRETURNING *",
     "describe": {
@@ -551,6 +504,57 @@
         false,
         false,
         false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "b42a68acb8f7a8882bfe409fe41b216c8cbf5ff05ce8854acc0fd99c024c082d": {
+    "query": "SELECT *\nFROM items\nWHERE user_id = $2\nORDER BY create_time ASC\nLIMIT $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "item_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "plaid_item_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "plaid_access_token",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Uuid"
+        ]
+      },
+      "nullable": [
         false,
         false,
         false,
