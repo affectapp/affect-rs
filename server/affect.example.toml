@@ -1,4 +1,4 @@
-port = 50051
+port-env-var = "AFFECT_SERVER_PORT"
 
 [postgres]
 uri = "postgres://"
@@ -10,3 +10,8 @@ project-id = "affect-app"
 [change]
 public-key = "pk_test_xyz"
 secret-key = "sk_test_xyz"
+
+[plaid]
+client-id = "5bfb3e73182564001115edd6"
+secret-key = "secret"
+env = "sandbox"
