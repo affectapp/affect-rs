@@ -1,4 +1,4 @@
-port-env-var = "PORT"
+port-env-var = "AFFECT_SERVER_PORT"
 
 [postgres]
 uri = "postgres://"

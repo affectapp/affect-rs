@@ -15,8 +15,8 @@ source = "git+https://github.com/affectapp/api?rev=a14c35e#a14c35eb274cd5bc1f5e3
 dependencies = [
  "prost",
  "prost-types",
- "tonic",
- "tonic-build",
+ "tonic 0.6.2 (git+https://github.com/hyperium/tonic.git?rev=01e5be5)",
+ "tonic-build 0.6.2 (git+https://github.com/hyperium/tonic.git?rev=01e5be5)",
 ]
 
 [[package]]
@@ -44,9 +44,8 @@ dependencies = [
  "thiserror",
  "tokio",
  "toml",
- "tonic",
+ "tonic 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "tonic-reflection",
- "tonic-web",
  "tower",
  "uuid",
 ]
@@ -55,7 +54,7 @@ dependencies = [
 name = "affect-status"
 version = "0.1.0"
 dependencies = [
- "tonic",
+ "tonic 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2048,6 +2047,37 @@ dependencies = [
 [[package]]
 name = "tonic"
 version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff08f4649d10a70ffa3522ca559031285d8e421d727ac85c60825761818f5d0a"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "base64 0.13.0",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "h2",
+ "http",
+ "http-body",
+ "hyper",
+ "hyper-timeout",
+ "percent-encoding",
+ "pin-project",
+ "prost",
+ "prost-derive",
+ "tokio",
+ "tokio-stream",
+ "tokio-util 0.6.9",
+ "tower",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
+name = "tonic"
+version = "0.6.2"
 source = "git+https://github.com/hyperium/tonic.git?rev=01e5be5#01e5be508051eebf19c233d48b57797a17331383"
 dependencies = [
  "async-stream",
@@ -2079,6 +2109,18 @@ dependencies = [
 [[package]]
 name = "tonic-build"
 version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9403f1bafde247186684b230dc6f38b5cd514584e8bec1dd32514be4745fa757"
+dependencies = [
+ "proc-macro2",
+ "prost-build",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "tonic-build"
+version = "0.6.2"
 source = "git+https://github.com/hyperium/tonic.git?rev=01e5be5#01e5be508051eebf19c233d48b57797a17331383"
 dependencies = [
  "prettyplease",
@@ -2091,32 +2133,16 @@ dependencies = [
 [[package]]
 name = "tonic-reflection"
 version = "0.3.0"
-source = "git+https://github.com/hyperium/tonic.git?rev=01e5be5#01e5be508051eebf19c233d48b57797a17331383"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "228cc5aa5d3e6e0624b5f756a7558038ee86428d1d58d8c6e551b389b12cf355"
 dependencies = [
  "bytes",
  "prost",
  "prost-types",
  "tokio",
  "tokio-stream",
- "tonic",
- "tonic-build",
-]
-
-[[package]]
-name = "tonic-web"
-version = "0.2.0"
-source = "git+https://github.com/hyperium/tonic.git?rev=01e5be5#01e5be508051eebf19c233d48b57797a17331383"
-dependencies = [
- "base64 0.13.0",
- "bytes",
- "futures-core",
- "http",
- "http-body",
- "hyper",
- "pin-project",
- "tonic",
- "tower-service",
- "tracing",
+ "tonic 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tonic-build 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

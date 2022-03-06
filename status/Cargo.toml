@@ -4,4 +4,4 @@ name = "affect-status"
 version = "0.1.0"
 
 [dependencies]
-tonic = { git = "https://github.com/hyperium/tonic.git", rev = "01e5be5" }
+tonic = "0.6"

@@ -107,7 +107,6 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let addr = format!("0.0.0.0:{0}", port).parse()?;
     info!("Starting server: {:?}", addr);
     Server::builder()
-        .accept_http1(true)
         .layer(middleware)
         .add_service(reflection_service)
         .add_service(tonic_web::enable(UserServiceServer::new(user_service)))
