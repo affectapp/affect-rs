@@ -1,14 +1,17 @@
 use affect_api::affect::{
-    item_service_server::ItemServiceServer, nonprofit_service_server::NonprofitServiceServer,
-    user_service_server::UserServiceServer,
+    cause_service_server::CauseServiceServer, item_service_server::ItemServiceServer,
+    nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
 };
 use affect_server::{
-    change::api::{ChangeClient, ChangeCredentials},
+    change::client::{ChangeClient, ChangeCredentials},
     config::ServerConfig,
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
     seed,
-    services::{item::ItemServiceImpl, nonprofit::NonprofitServiceImpl, user::UserServiceImpl},
+    services::{
+        cause::CauseServiceImpl, item::ItemServiceImpl, nonprofit::NonprofitServiceImpl,
+        user::UserServiceImpl,
+    },
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
 use affect_storage::{
@@ -94,6 +97,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         account_store.clone(),
         plaid_client.clone(),
     );
+    let cause_service = CauseServiceImpl::new(pool.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {
         (None, Some(port_env_var)) => std::env::var(&port_env_var)?.parse()?,
@@ -111,6 +115,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
             nonprofit_service,
         )))
         .add_service(tonic_web::enable(ItemServiceServer::new(item_service)))
+        .add_service(tonic_web::enable(CauseServiceServer::new(cause_service)))
         .serve(addr)
         .await?;
 

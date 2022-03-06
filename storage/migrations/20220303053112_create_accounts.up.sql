@@ -8,4 +8,4 @@ CREATE TABLE accounts (
   mask VARCHAR(255),
   PRIMARY KEY (account_id),
   CONSTRAINT fk_account_to_item FOREIGN KEY (item_id) REFERENCES items(item_id)
-);
+)

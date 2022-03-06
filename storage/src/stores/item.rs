@@ -31,12 +31,15 @@ pub struct NewItemRow {
 pub struct ItemPageToken {
     #[serde(with = "ts_nanoseconds")]
     pub create_time: DateTime<Utc>,
+
+    pub item_id: Uuid,
 }
 
 impl PageTokenable<ItemPageToken> for ItemRow {
     fn page_token(&self) -> ItemPageToken {
         ItemPageToken {
             create_time: self.create_time.clone(),
+            item_id: self.item_id.clone(),
         }
     }
 }
@@ -105,8 +108,9 @@ impl ItemStore for PgItemStore {
                     ItemRow,
                     "queries/item/list_at_page_for_user.sql",
                     page_token.create_time,
-                    page_size,
+                    page_token.item_id,
                     &user_id,
+                    page_size,
                 )
                 .fetch_all(self.pool.inner())
                 .await?

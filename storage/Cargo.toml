@@ -19,7 +19,7 @@ sqlx = { version = "0.5", features = [
   "macros",
 ] }
 thiserror = "1.0"
-uuid = { version = "0.8", features = ["v4"] }
+uuid = { version = "0.8", features = ["v4", "serde"] }
 serde = "1.0"
 serde_json = "1.0"
 anyhow = "1.0"

@@ -37,12 +37,15 @@ pub struct NewNonprofitRow {
 pub struct NonprofitPageToken {
     #[serde(with = "ts_nanoseconds")]
     pub create_time: DateTime<Utc>,
+
+    pub nonprofit_id: Uuid,
 }
 
 impl PageTokenable<NonprofitPageToken> for NonprofitRow {
     fn page_token(&self) -> NonprofitPageToken {
         NonprofitPageToken {
             create_time: self.create_time.clone(),
+            nonprofit_id: self.nonprofit_id.clone(),
         }
     }
 }
@@ -111,6 +114,7 @@ impl NonprofitStore for PgNonprofitStore {
                     NonprofitRow,
                     "queries/nonprofit/list_at_page.sql",
                     page_token.create_time,
+                    page_token.nonprofit_id,
                     page_size,
                 )
                 .fetch_all(self.pool.inner())

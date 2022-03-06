@@ -22,9 +22,7 @@ impl UserServiceImpl {
 
 fn user_row_to_proto(user_row: UserRow) -> User {
     User {
-        user_id: Some(UserId {
-            value: user_row.user_id.to_string(),
-        }),
+        user_id: user_row.user_id.to_string(),
         create_time: Some(Timestamp {
             seconds: user_row.create_time.timestamp(),
             nanos: user_row.create_time.timestamp_subsec_nanos() as i32,

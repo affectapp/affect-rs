@@ -1,1 +1,1 @@
-DROP TABLE nonprofits;
+DROP TABLE nonprofits

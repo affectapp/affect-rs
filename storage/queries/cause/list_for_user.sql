@@ -1,6 +1,6 @@
 SELECT *
-FROM items
+FROM causes
 WHERE user_id = $2
 ORDER BY create_time ASC,
-  item_id ASC
+  cause_id ASC
 LIMIT $1
