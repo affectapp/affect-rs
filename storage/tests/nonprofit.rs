@@ -1,6 +1,5 @@
 use affect_storage::stores::nonprofit::*;
 use chrono::{TimeZone, Utc};
-use std::sync::Arc;
 use testcontainers::clients::Cli;
 use uuid::Uuid;
 
@@ -8,9 +7,9 @@ mod common;
 
 #[tokio::test]
 async fn create_nonprofit() -> Result<(), anyhow::Error> {
-    let docker_cli = Cli::default();
-    let pg_container = common::setup_pg_container(&docker_cli).await?;
-    let nonprofit_store = PgNonprofitStore::new(Arc::new(pg_container.pool));
+    let docker = Cli::default();
+    let container = common::setup_pg_container(&docker).await?;
+    let store = container.pool.store();
 
     let mut expected_nonprofit = NonprofitRow {
         nonprofit_id: Uuid::new_v4(),
@@ -25,7 +24,7 @@ async fn create_nonprofit() -> Result<(), anyhow::Error> {
     };
 
     // Insert nonprofit.
-    let nonprofit = nonprofit_store
+    let nonprofit = store
         .add_nonprofit(NewNonprofitRow {
             create_time: expected_nonprofit.create_time.clone(),
             update_time: expected_nonprofit.update_time.clone(),

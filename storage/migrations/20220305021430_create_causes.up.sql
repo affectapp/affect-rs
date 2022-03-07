@@ -1,5 +1,5 @@
 CREATE TABLE causes (
-  cause_id uuid NOT NULL,
+  cause_id uuid NOT NULL DEFAULT uuid_generate_v4(),
   create_time TIMESTAMPTZ NOT NULL,
   update_time TIMESTAMPTZ NOT NULL,
   user_id uuid NOT NULL,

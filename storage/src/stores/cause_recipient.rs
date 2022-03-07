@@ -34,19 +34,19 @@ pub trait CauseRecipientStore: Sync + Send {
 }
 
 #[async_trait]
-impl<'a> CauseRecipientStore for PgOnDemandStore<'a> {
+impl CauseRecipientStore for PgOnDemandStore {
     async fn add_cause_recipient(
         &self,
         new_row: NewCauseRecipientRow,
     ) -> Result<CauseRecipientRow, Error> {
-        Ok(add_cause_recipient(*self.pool, new_row).await?)
+        Ok(add_cause_recipient(&*self.pool, new_row).await?)
     }
 
     async fn list_cause_recipients_for_cause(
         &self,
         cause_id: Uuid,
     ) -> Result<Vec<CauseRecipientRow>, Error> {
-        Ok(list_cause_recipients_for_cause(*self.pool, cause_id).await?)
+        Ok(list_cause_recipients_for_cause(&*self.pool, cause_id).await?)
     }
 }
 

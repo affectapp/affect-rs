@@ -41,8 +41,9 @@ impl PageTokenable<CausePageToken> for CauseRow {
     }
 }
 
+// #[cfg_attr(test, mockall::automock)]
 #[async_trait]
-pub trait CauseStore: Sync + Send {
+pub trait CauseStore /* : Sync + Send */ {
     async fn add_cause(&self, new_row: NewCauseRow) -> Result<CauseRow, Error>;
 
     async fn list_causes_for_user(
@@ -90,9 +91,9 @@ impl<'a> CauseStore for PgTransactionalStore<'a> {
 }
 
 #[async_trait]
-impl<'a> CauseStore for PgOnDemandStore<'a> {
+impl CauseStore for PgOnDemandStore {
     async fn add_cause(&self, new_row: NewCauseRow) -> Result<CauseRow, Error> {
-        Ok(add_cause(*self.pool, new_row).await?)
+        Ok(add_cause(&*self.pool, new_row).await?)
     }
 
     async fn list_causes_for_user(
@@ -101,11 +102,11 @@ impl<'a> CauseStore for PgOnDemandStore<'a> {
         page_token: Option<CausePageToken>,
         user_id: Uuid,
     ) -> Result<Vec<CauseRow>, Error> {
-        Ok(list_causes_for_user(*self.pool, page_size, page_token, user_id).await?)
+        Ok(list_causes_for_user(&*self.pool, page_size, page_token, user_id).await?)
     }
 
     async fn count_causes_for_user(&self, user_id: Uuid) -> Result<i64, Error> {
-        Ok(count_causes_for_user(*self.pool, user_id).await?)
+        Ok(count_causes_for_user(&*self.pool, user_id).await?)
     }
 }
 

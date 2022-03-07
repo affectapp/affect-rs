@@ -1,8 +1,7 @@
-use crate::{Error, PgPool};
+use crate::{Error, PgOnDemandStore};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
-use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, FromRow, PartialEq)]
@@ -33,18 +32,8 @@ pub trait AccountStore: Sync + Send {
     async fn list_accounts_for_item(&self, item_id: Uuid) -> Result<Vec<AccountRow>, Error>;
 }
 
-pub struct PgAccountStore {
-    pool: Arc<PgPool>,
-}
-
-impl PgAccountStore {
-    pub fn new(pool: Arc<PgPool>) -> Self {
-        Self { pool }
-    }
-}
-
 #[async_trait]
-impl AccountStore for PgAccountStore {
+impl AccountStore for PgOnDemandStore {
     async fn add_account(&self, new_row: NewAccountRow) -> Result<AccountRow, Error> {
         Ok(sqlx::query_file_as!(
             AccountRow,
@@ -56,13 +45,13 @@ impl AccountStore for PgAccountStore {
             new_row.name,
             new_row.mask,
         )
-        .fetch_one(self.pool.inner())
+        .fetch_one(&*self.pool)
         .await?)
     }
 
     async fn list_accounts_for_item(&self, item_id: Uuid) -> Result<Vec<AccountRow>, Error> {
         let rows = sqlx::query_file_as!(AccountRow, "queries/account/list_for_item.sql", item_id)
-            .fetch_all(self.pool.inner())
+            .fetch_all(&*self.pool)
             .await?;
         Ok(rows)
     }

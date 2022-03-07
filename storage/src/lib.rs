@@ -1,5 +1,6 @@
 use affect_status::Status;
-use futures::{lock::Mutex, Future};
+use async_trait::async_trait;
+use futures::lock::Mutex;
 use sqlx::{migrate::MigrateError, postgres::PgPoolOptions, Pool, Postgres, Transaction};
 use std::{sync::Arc, time::Duration};
 
@@ -32,7 +33,7 @@ impl From<Error> for Status {
 }
 
 pub struct PgPool {
-    inner: Pool<Postgres>,
+    inner: Arc<Pool<Postgres>>,
 }
 
 impl PgPool {
@@ -44,7 +45,9 @@ impl PgPool {
             .connect_timeout(Duration::from_secs(5))
             .connect(&postgres_uri)
             .await?;
-        Ok(Self { inner })
+        Ok(Self {
+            inner: Arc::new(inner),
+        })
     }
 
     // Returns reference to the underlying sqlx pg pool.
@@ -57,59 +60,81 @@ impl PgPool {
         Ok(sqlx::migrate!().run(self.inner()).await?)
     }
 
-    pub fn on_demand<'a>(&'a self) -> PgOnDemandStore<'a> {
-        PgOnDemandStore::new(Arc::new(&self.inner))
-    }
-
-    pub async fn transactional<'a>(&self) -> Result<PgTransactionalStore<'a>, Error> {
-        let txn = self.inner().begin().await?;
-        Ok(PgTransactionalStore::new(Arc::new(Mutex::new(txn))))
-    }
-
-    pub async fn with_transaction<'a, R, Fut>(
-        &self,
-        fun: impl FnOnce(PgTransactionalStore<'a>) -> Fut,
-    ) -> Result<R, Error>
-    where
-        Fut: Future<Output = R>,
-    {
-        let txn = self.transactional().await?;
-        Ok(fun(txn).await)
+    // Returns an on-demand store. This will dynamically grab connections from the
+    // pool to perform sql queries/updates. This is preferred for readonly operations
+    // or when a transaction is not desired.
+    pub fn store(&self) -> PgOnDemandStore {
+        PgOnDemandStore::new(self.inner.clone())
     }
 }
 
-pub struct PgOnDemandStore<'a> {
-    pool: Arc<&'a Pool<Postgres>>,
+// Store which selects connections from the pool per query. A transactional
+// store can be created from this store using begin().
+#[async_trait]
+pub trait OnDemandStore<TStore>: Send + Sync
+where
+    TStore: TransactionalStore,
+{
+    // Selects a connection from the pool and starts a transaction.
+    async fn begin(&self) -> Result<TStore, Error>;
 }
 
-impl<'a> PgOnDemandStore<'a> {
-    pub fn new(pool: Arc<&'a Pool<Postgres>>) -> Self {
+#[derive(Debug)]
+pub struct PgOnDemandStore {
+    pool: Arc<Pool<Postgres>>,
+}
+
+impl PgOnDemandStore {
+    fn new(pool: Arc<Pool<Postgres>>) -> Self {
         Self { pool }
     }
 }
 
+#[async_trait]
+impl<'a> OnDemandStore<PgTransactionalStore<'a>> for PgOnDemandStore {
+    async fn begin(&self) -> Result<PgTransactionalStore<'a>, Error> {
+        let txn = self.pool.begin().await?;
+        Ok(PgTransactionalStore::new(Arc::new(Mutex::new(txn))))
+    }
+}
+
+// Store which, while a reference exists, holds an open connection and
+// transaction. The transaction should either be committed or rolled back.
+// If neither happen, when this store is dropped the transaction will be
+// rolled back.
+#[async_trait]
+pub trait TransactionalStore: Send + Sync {
+    // Commit the transaction, returning error if that fails.
+    async fn commit(self) -> Result<(), Error>;
+
+    // Rolls back the transaction, returning error if that fails.
+    async fn rollback(self) -> Result<(), Error>;
+}
+
+#[derive(Debug)]
 pub struct PgTransactionalStore<'a> {
     txn: Arc<Mutex<Transaction<'a, Postgres>>>,
 }
 
 impl<'a> PgTransactionalStore<'a> {
-    pub fn new(txn: Arc<Mutex<Transaction<'a, Postgres>>>) -> Self {
+    fn new(txn: Arc<Mutex<Transaction<'a, Postgres>>>) -> Self {
         Self { txn }
     }
+}
 
-    // Commit the transaction, returning error if that fails.
-    // Consumes self.
-    pub async fn commit(self) -> Result<(), Error> {
-        let lock = Arc::try_unwrap(self.txn).expect("lock still has multiple owners");
+#[async_trait]
+impl<'a> TransactionalStore for PgTransactionalStore<'a> {
+    async fn commit(self) -> Result<(), Error> {
+        let lock = Arc::try_unwrap(self.txn)
+            .map_err(|e| anyhow::anyhow!("failed to unwrap transaction arc: {:?}", e))?;
         let txn = lock.into_inner();
         txn.commit().await?;
         Ok(())
     }
 
-    // Rolls back the transaction, returning error if that fails.
-    // Consumes self.
-    pub async fn rollback(self) -> Result<(), Error> {
-        let lock = Arc::try_unwrap(self.txn).expect("lock still has multiple owners");
+    async fn rollback(self) -> Result<(), Error> {
+        let lock = Arc::try_unwrap(self.txn)
+            .map_err(|e| anyhow::anyhow!("failed to unwrap transaction arc: {:?}", e))?;
         let txn = lock.into_inner();
         txn.rollback().await?;
         Ok(())

@@ -1,11 +1,10 @@
 use crate::page_token::PageTokenable;
-use crate::{Error, PgPool};
+use crate::{Error, PgOnDemandStore};
 use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, FromRow, PartialEq)]
@@ -73,18 +72,8 @@ pub trait NonprofitStore: Sync + Send {
     }
 }
 
-pub struct PgNonprofitStore {
-    pool: Arc<PgPool>,
-}
-
-impl PgNonprofitStore {
-    pub fn new(pool: Arc<PgPool>) -> Self {
-        Self { pool }
-    }
-}
-
 #[async_trait]
-impl NonprofitStore for PgNonprofitStore {
+impl NonprofitStore for PgOnDemandStore {
     async fn add_nonprofit(&self, new_profit: NewNonprofitRow) -> Result<NonprofitRow, Error> {
         Ok(sqlx::query_file_as!(
             NonprofitRow,
@@ -98,7 +87,7 @@ impl NonprofitStore for PgNonprofitStore {
             &new_profit.mission,
             &new_profit.category,
         )
-        .fetch_one(self.pool.inner())
+        .fetch_one(&*self.pool)
         .await?)
     }
 
@@ -117,13 +106,13 @@ impl NonprofitStore for PgNonprofitStore {
                     page_token.nonprofit_id,
                     page_size,
                 )
-                .fetch_all(self.pool.inner())
+                .fetch_all(&*self.pool)
                 .await?
             }
             None => {
                 // Query first page:
                 sqlx::query_file_as!(NonprofitRow, "queries/nonprofit/list.sql", page_size)
-                    .fetch_all(self.pool.inner())
+                    .fetch_all(&*self.pool)
                     .await?
             }
         };
@@ -132,7 +121,7 @@ impl NonprofitStore for PgNonprofitStore {
 
     async fn count_nonprofits(&self) -> Result<i64, Error> {
         Ok(sqlx::query_file!("queries/nonprofit/count.sql")
-            .fetch_one(self.pool.inner())
+            .fetch_one(&*self.pool)
             .await?
             .count
             .expect("null count query"))

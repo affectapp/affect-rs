@@ -1,11 +1,10 @@
 use crate::page_token::PageTokenable;
-use crate::{Error, PgPool};
+use crate::{Error, PgOnDemandStore};
 use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, FromRow, PartialEq)]
@@ -69,18 +68,8 @@ pub trait ItemStore: Sync + Send {
     }
 }
 
-pub struct PgItemStore {
-    pool: Arc<PgPool>,
-}
-
-impl PgItemStore {
-    pub fn new(pool: Arc<PgPool>) -> Self {
-        Self { pool }
-    }
-}
-
 #[async_trait]
-impl ItemStore for PgItemStore {
+impl ItemStore for PgOnDemandStore {
     async fn add_item(&self, new_row: NewItemRow) -> Result<ItemRow, Error> {
         Ok(sqlx::query_file_as!(
             ItemRow,
@@ -91,7 +80,7 @@ impl ItemStore for PgItemStore {
             new_row.plaid_item_id,
             new_row.plaid_access_token
         )
-        .fetch_one(self.pool.inner())
+        .fetch_one(&*self.pool)
         .await?)
     }
 
@@ -112,7 +101,7 @@ impl ItemStore for PgItemStore {
                     &user_id,
                     page_size,
                 )
-                .fetch_all(self.pool.inner())
+                .fetch_all(&*self.pool)
                 .await?
             }
             None => {
@@ -123,7 +112,7 @@ impl ItemStore for PgItemStore {
                     page_size,
                     &user_id
                 )
-                .fetch_all(self.pool.inner())
+                .fetch_all(&*self.pool)
                 .await?
             }
         };
@@ -133,7 +122,7 @@ impl ItemStore for PgItemStore {
     async fn count_items_for_user(&self, user_id: Uuid) -> Result<i64, Error> {
         Ok(
             sqlx::query_file!("queries/item/count_for_user.sql", &user_id)
-                .fetch_one(self.pool.inner())
+                .fetch_one(&*self.pool)
                 .await?
                 .count
                 .expect("null count query"),

@@ -4,5 +4,5 @@
 export CONFIG_PATH=server/affect.toml
 export RUST_LOG=info
 export RUST_BACKTRACE=true
-export PORT=8080
+export AFFECT_SERVER_PORT=50051
 cargo run
