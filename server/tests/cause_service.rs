@@ -4,8 +4,8 @@ use affect_api::affect::{
 };
 use affect_server::services::cause::CauseServiceImpl;
 use affect_storage::{
+    sqlx::store::{OnDemandStore, TransactionalStore},
     stores::{cause::*, cause_recipient::*},
-    OnDemandStore, TransactionalStore,
 };
 use async_trait::async_trait;
 use chrono::Utc;

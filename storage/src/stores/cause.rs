@@ -1,5 +1,6 @@
 use crate::page_token::PageTokenable;
-use crate::{Error, PgOnDemandStore, PgTransactionalStore};
+use crate::sqlx::store::{PgOnDemandStore, PgTransactionalStore};
+use crate::Error;
 use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
 use chrono::{DateTime, Utc};

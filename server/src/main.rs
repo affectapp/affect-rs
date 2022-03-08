@@ -14,7 +14,7 @@ use affect_server::{
     },
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
-use affect_storage::PgPool;
+use affect_storage::sqlx::pool::PgPool;
 use log::info;
 use std::{sync::Arc, time::Duration};
 use tonic::transport::Server;

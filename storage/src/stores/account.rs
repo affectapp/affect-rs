@@ -1,4 +1,4 @@
-use crate::{Error, PgOnDemandStore};
+use crate::{sqlx::store::PgOnDemandStore, Error};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;

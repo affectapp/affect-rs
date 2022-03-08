@@ -1,4 +1,4 @@
-use affect_storage::PgPool;
+use affect_storage::sqlx::pool::PgPool;
 use anyhow::Context;
 use testcontainers::{
     clients::Cli,

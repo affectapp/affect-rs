@@ -4,12 +4,13 @@ use affect_api::affect::{
 };
 use affect_storage::{
     page_token::{PageToken, PageTokenable},
+    sqlx::store::OnDemandStore,
+    sqlx::store::TransactionalStore,
     stores::{
         cause::{CausePageToken, CauseRow, CauseStore},
         cause_and_recipient::CauseAndRecipientStore,
         cause_recipient::{CauseRecipientRow, CauseRecipientStore},
     },
-    OnDemandStore, TransactionalStore,
 };
 use async_trait::async_trait;
 use prost_types::Timestamp;

@@ -1,9 +1,10 @@
 use crate::{
+    sqlx::store::TransactionalStore,
     stores::{
         cause::{CauseRow, CauseStore, NewCauseRow},
         cause_recipient::{CauseRecipientRow, CauseRecipientStore, NewCauseRecipientRow},
     },
-    Error, TransactionalStore,
+    Error,
 };
 use async_trait::async_trait;
 use chrono::Utc;
