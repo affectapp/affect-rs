@@ -656,6 +656,47 @@
       ]
     }
   },
+  "a908a6733af92d2efa31c17f3514134dc75a0329fb303a9f9e34ffbe7c52c11c": {
+    "query": "INSERT INTO cause_recipients (\n    cause_id,\n    nonprofit_id,\n    create_time,\n    update_time\n  )\nVALUES ($1, $2, $3, $4)\nRETURNING *",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "cause_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Timestamptz",
+          "Timestamptz"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "ab949056689a4e2c7745c38838b4ab2bc37855f6da08eade042b387921ddaff1": {
     "query": "INSERT INTO nonprofits (\n    nonprofit_id,\n    create_time,\n    update_time,\n    change_nonprofit_id,\n    icon_url,\n    name,\n    ein,\n    mission,\n    category\n  )\nVALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)\nRETURNING *",
     "describe": {
@@ -724,6 +765,44 @@
         false,
         false,
         false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "c004a52363e4a8a7b333381f9cb085602e75f43d3fb68a97ea45b755f7dd737e": {
+    "query": "SELECT *\nFROM cause_recipients\nWHERE cause_id = $1\nORDER BY create_time ASC,\n  nonprofit_id ASC",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "cause_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
         false,
         false,
         false,
