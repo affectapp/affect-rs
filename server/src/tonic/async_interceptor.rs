@@ -6,10 +6,7 @@ use tonic::{body::BoxBody, Status};
 use tower::{Layer, Service};
 
 #[async_trait]
-pub trait AsyncInterceptor
-where
-    Self: Sized + Clone + Send + Sync,
-{
+pub trait AsyncInterceptor: Sized + Clone + Send + Sync {
     async fn intercept(&self, req: &mut Request<Body>) -> Result<(), Status>;
 }
 

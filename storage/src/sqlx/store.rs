@@ -4,10 +4,10 @@ use futures::lock::Mutex;
 use sqlx::{Pool, Postgres, Transaction};
 use std::sync::Arc;
 
-// Store which selects connections from the pool per query. A transactional
-// store can be created from this store using begin().
+/// Store which selects connections from the pool per query. A transactional
+/// store can be created from this store using begin().
 #[async_trait]
-pub trait OnDemandStore<TStore>: Send + Sync
+pub trait OnDemandStore<TStore>
 where
     TStore: TransactionalStore,
 {
@@ -34,16 +34,16 @@ impl<'a> OnDemandStore<PgTransactionalStore<'a>> for PgOnDemandStore {
     }
 }
 
-// Store which, while a reference exists, holds an open connection and
-// transaction. The transaction should either be committed or rolled back.
-// If neither happen, when this store is dropped the transaction will be
-// rolled back.
+/// Store which, while a reference exists, holds an open connection and
+/// transaction. The transaction should either be committed or rolled back.
+/// If neither happen, when this store is dropped the transaction will be
+/// rolled back.
 #[async_trait]
-pub trait TransactionalStore: Send + Sync {
-    // Commit the transaction, returning error if that fails.
+pub trait TransactionalStore {
+    /// Commit the transaction, returning error if that fails.
     async fn commit(self) -> Result<(), Error>;
 
-    // Rolls back the transaction, returning error if that fails.
+    /// Rolls back the transaction, returning error if that fails.
     async fn rollback(self) -> Result<(), Error>;
 }
 

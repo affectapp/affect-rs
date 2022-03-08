@@ -11,7 +11,8 @@ use chrono::Utc;
 use uuid::Uuid;
 
 #[async_trait]
-pub trait CauseAndRecipientStore: Send + Sync {
+pub trait CauseAndRecipientStore {
+    /// Adds a cause and recipients of the cause.
     async fn add_cause_and_recipients(
         &self,
         user_id: Uuid,
@@ -19,8 +20,7 @@ pub trait CauseAndRecipientStore: Send + Sync {
     ) -> Result<(CauseRow, Vec<CauseRecipientRow>), Error>;
 }
 
-// Implement it for types that are cause stores, cause recipient stores, and are
-// transactional, ensuring the operations are committed.
+/// Implementation of the store for transactions.
 #[async_trait]
 impl<S> CauseAndRecipientStore for S
 where

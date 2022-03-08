@@ -31,7 +31,7 @@ impl ChangeClient {
         }
     }
 
-    // See https://docs.getchange.io/api/#Nonprofits-Search-a-nonprofit
+    /// See https://docs.getchange.io/api/#Nonprofits-Search-a-nonprofit
     pub async fn search_nonprofits(
         &self,
         request: &SearchNonprofitsRequest,
@@ -52,12 +52,12 @@ impl ChangeClient {
         Ok(self.get("nonprofits", Some(&query_params)).await?)
     }
 
-    // See https://docs.getchange.io/api/#Donations-Create-a-donation
+    /// See https://docs.getchange.io/api/#Donations-Create-a-donation
     pub async fn create_donation(&self, request: CreateDonationRequest) -> Result<Donation, Error> {
         Ok(self.post("donations", Some(&request)).await?)
     }
 
-    // See https://docs.getchange.io/api/#Donations-List-your-donations
+    /// See https://docs.getchange.io/api/#Donations-List-your-donations
     pub async fn list_donations(
         &self,
         request: &ListDonationsRequest,
@@ -70,26 +70,26 @@ impl ChangeClient {
         Ok(self.get("donations", Some(&query_params)).await?)
     }
 
-    // See https://docs.getchange.io/api/#Donations-Retrieve-a-donation
+    /// See https://docs.getchange.io/api/#Donations-Retrieve-a-donation
     pub async fn get_donation(&self, id: String) -> Result<Donation, Error> {
         Ok(self
             .get::<(), Donation>(&format!("donations/{0}", id), None)
             .await?)
     }
 
-    // See https://docs.getchange.io/api/#Marketplace-Create-a-managed-account
+    /// See https://docs.getchange.io/api/#Marketplace-Create-a-managed-account
     pub async fn create_account(&self, request: CreateAccountRequest) -> Result<Account, Error> {
         Ok(self.post("accounts", Some(&request)).await?)
     }
 
-    // See https://docs.getchange.io/api/#Marketplace-Create-a-link-bank-token
+    /// See https://docs.getchange.io/api/#Marketplace-Create-a-link-bank-token
     pub async fn create_link_bank_token(&self, id: String) -> Result<String, Error> {
         Ok(self
             .post_text_resp::<()>(&format!("accounts/{0}/link_bank_token", id), None)
             .await?)
     }
 
-    // See https://docs.getchange.io/api/#Marketplace-Attach-a-bank-to-a-managed-account
+    /// See https://docs.getchange.io/api/#Marketplace-Attach-a-bank-to-a-managed-account
     pub async fn attach_bank_account(
         &self,
         request: AttachBankAccountRequest,

@@ -27,8 +27,10 @@ pub struct NewAccountRow {
 
 #[async_trait]
 pub trait AccountStore: Sync + Send {
+    /// Adds an account.
     async fn add_account(&self, new_row: NewAccountRow) -> Result<AccountRow, Error>;
 
+    /// Lists all accounts for the provided item.
     async fn list_accounts_for_item(&self, item_id: Uuid) -> Result<Vec<AccountRow>, Error>;
 }
 
