@@ -1,2 +1,2 @@
 -- DROP EXTENSION "uuid-ossp";
-SELECT 1;
+SELECT 1

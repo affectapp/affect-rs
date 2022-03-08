@@ -1,8 +1,7 @@
-use crate::{Error, PgPool};
+use crate::{sqlx::store::PgOnDemandStore, Error};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::FromRow;
-use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, FromRow)]
@@ -31,18 +30,8 @@ pub trait UserStore: Sync + Send {
     ) -> Result<Option<UserRow>, Error>;
 }
 
-pub struct PgUserStore {
-    pool: Arc<PgPool>,
-}
-
-impl PgUserStore {
-    pub fn new(pool: Arc<PgPool>) -> Self {
-        Self { pool }
-    }
-}
-
 #[async_trait]
-impl UserStore for PgUserStore {
+impl UserStore for PgOnDemandStore {
     async fn add_user(&self, new_user: NewUserRow) -> Result<UserRow, Error> {
         Ok(sqlx::query_file_as!(
             UserRow,
@@ -52,7 +41,7 @@ impl UserStore for PgUserStore {
             &new_user.firebase_uid,
             &new_user.firebase_email,
         )
-        .fetch_one(self.pool.inner())
+        .fetch_one(&*self.pool)
         .await?)
     }
 
@@ -65,7 +54,7 @@ impl UserStore for PgUserStore {
             "queries/user/find_by_firebase_uid.sql",
             &firebase_uid,
         )
-        .fetch_optional(self.pool.inner())
+        .fetch_optional(&*self.pool)
         .await?)
     }
 }

@@ -1,22 +1,20 @@
 use affect_api::affect::{
-    item_service_server::ItemServiceServer, nonprofit_service_server::NonprofitServiceServer,
-    user_service_server::UserServiceServer,
+    cause_service_server::CauseServiceServer, item_service_server::ItemServiceServer,
+    nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
 };
 use affect_server::{
-    change::api::{ChangeClient, ChangeCredentials},
+    change::client::{ChangeClient, ChangeCredentials},
     config::ServerConfig,
     firebase::FirebaseAuth,
     interceptors::authn::AuthnInterceptor,
     seed,
-    services::{item::ItemServiceImpl, nonprofit::NonprofitServiceImpl, user::UserServiceImpl},
+    services::{
+        cause::CauseServiceImpl, item::ItemServiceImpl, nonprofit::NonprofitServiceImpl,
+        user::UserServiceImpl,
+    },
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
-use affect_storage::{
-    stores::{
-        account::PgAccountStore, item::PgItemStore, nonprofit::PgNonprofitStore, user::PgUserStore,
-    },
-    PgPool,
-};
+use affect_storage::sqlx::pool::PgPool;
 use log::info;
 use std::{sync::Arc, time::Duration};
 use tonic::transport::Server;
@@ -49,10 +47,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Database connection and stores:
     info!("Connecting to database");
     let pool = Arc::new(PgPool::connect(config.postgres.uri).await?);
-    let user_store = Arc::new(PgUserStore::new(pool.clone()));
-    let nonprofit_store = Arc::new(PgNonprofitStore::new(pool.clone()));
-    let item_store = Arc::new(PgItemStore::new(pool.clone()));
-    let account_store = Arc::new(PgAccountStore::new(pool.clone()));
+    let store = Arc::new(pool.store());
 
     info!("Running migrations (if any)");
     pool.run_migrations().await?;
@@ -71,13 +66,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     ));
 
     // Seed database with data.
-    seed::insert_nonprofits(nonprofit_store.clone(), change_client).await?;
+    seed::insert_nonprofits(store.clone(), change_client).await?;
 
     // Interceptors/middleware:
-    let authn_interceptor_layer = AsyncInterceptorLayer::new(AuthnInterceptor::new(
-        firebase_auth.clone(),
-        user_store.clone(),
-    ));
+    let authn_interceptor_layer =
+        AsyncInterceptorLayer::new(AuthnInterceptor::new(firebase_auth.clone(), store.clone()));
     let middleware = ServiceBuilder::new()
         .timeout(Duration::from_secs(30))
         .layer(authn_interceptor_layer)
@@ -87,13 +80,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(affect_api::FILE_DESCRIPTOR_SET)
         .build()?;
-    let user_service = UserServiceImpl::new(user_store.clone(), firebase_auth.clone());
-    let nonprofit_service = NonprofitServiceImpl::new(nonprofit_store.clone());
-    let item_service = ItemServiceImpl::new(
-        item_store.clone(),
-        account_store.clone(),
-        plaid_client.clone(),
-    );
+    let user_service = UserServiceImpl::new(store.clone(), firebase_auth.clone());
+    let nonprofit_service = NonprofitServiceImpl::new(store.clone());
+    let item_service = ItemServiceImpl::new(store.clone(), plaid_client.clone());
+    let cause_service = CauseServiceImpl::new(store.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {
         (None, Some(port_env_var)) => std::env::var(&port_env_var)?.parse()?,
@@ -103,14 +93,12 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let addr = format!("0.0.0.0:{0}", port).parse()?;
     info!("Starting server: {:?}", addr);
     Server::builder()
-        .accept_http1(true)
         .layer(middleware)
         .add_service(reflection_service)
-        .add_service(tonic_web::enable(UserServiceServer::new(user_service)))
-        .add_service(tonic_web::enable(NonprofitServiceServer::new(
-            nonprofit_service,
-        )))
-        .add_service(tonic_web::enable(ItemServiceServer::new(item_service)))
+        .add_service(UserServiceServer::new(user_service))
+        .add_service(NonprofitServiceServer::new(nonprofit_service))
+        .add_service(ItemServiceServer::new(item_service))
+        .add_service(CauseServiceServer::new(cause_service))
         .serve(addr)
         .await?;
 

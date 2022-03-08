@@ -9,4 +9,4 @@ CREATE TABLE nonprofits (
   mission TEXT NOT NULL,
   category VARCHAR(255) NOT NULL,
   PRIMARY KEY (nonprofit_id)
-);
+)

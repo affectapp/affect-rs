@@ -1,0 +1,51 @@
+# gRPC services are built on http/2 protocol, but browser support for http/2
+# tends to vary. As such, grpc-web clients require a proxy to act as a gRPC
+# "bridge" or "gateway" to paper over these limitations.
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address: { address: 0.0.0.0, port_value: '${ENVOY_ADMIN_PORT}' }
+
+static_resources:
+  listeners:
+    - name: listener_0
+      address:
+        # This is the public port config for talking to the rust server
+        socket_address: { address: 0.0.0.0, port_value: '${PORT}' }
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              config:
+                codec_type: auto
+                stat_prefix: ingress_http
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: local_service
+                      domains: ["*"]
+                      routes:
+                        - match: { prefix: "/" }
+                          route:
+                            cluster: affect_server
+                            max_grpc_timeout: 0s
+                      cors:
+                        allow_origin_string_match:
+                          - prefix: "*"
+                        allow_methods: GET, PUT, DELETE, POST, OPTIONS
+                        allow_headers: "*"
+                        expose_headers: "*"
+                        max_age: "1728000"
+                http_filters:
+                  - name: envoy.grpc_web
+                  - name: envoy.cors
+                  - name: envoy.router
+  clusters:
+    - name: affect_server
+      connect_timeout: 0.25s
+      type: logical_dns
+      http2_protocol_options: {}
+      lb_policy: round_robin
+      hosts: 
+        - socket_address:
+            address: 0.0.0.0
+            port_value: '${AFFECT_SERVER_PORT}'

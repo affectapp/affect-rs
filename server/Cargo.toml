@@ -4,7 +4,7 @@ name = "affect-server"
 version = "0.1.0"
 
 [dependencies]
-affect-api = { git = "https://github.com/affectapp/api", rev = "790df71" }
+affect-api = { git = "https://github.com/affectapp/api", rev = "cd58288" }
 affect-storage = { path = "../storage" }
 async-trait = "0.1"
 base64 = "0.13"
@@ -19,9 +19,8 @@ serde_json = "1.0"
 thiserror = "1.0"
 tokio = { version = "1.17", features = ["macros", "rt-multi-thread"] }
 toml = "0.5"
-tonic = { git = "https://github.com/hyperium/tonic.git", rev = "01e5be5" }
-tonic-reflection = { git = "https://github.com/hyperium/tonic.git", rev = "01e5be5" }
-tonic-web = { git = "https://github.com/hyperium/tonic.git", rev = "01e5be5" }
+tonic = "0.6"
+tonic-reflection = "0.3.0"
 tower = "0.4"
 uuid = { version = "0.8", features = ["v4"] }
 log = "0.4"
@@ -29,4 +28,7 @@ env_logger = "0.9"
 reqwest = "0.11"
 derive_builder = "0.10"
 anyhow = "1.0"
-plaid = { git = "https://github.com/affectapp/plaid.git", rev = "210f7f7" }
+plaid = { git = "https://github.com/affectapp/plaid.git", tag = "v0.5.0" }
+
+[dev-dependencies]
+mockall = "0.11"

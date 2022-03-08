@@ -1,4 +1,4 @@
-pub mod api;
+pub mod client;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

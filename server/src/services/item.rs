@@ -19,23 +19,20 @@ use std::{
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-pub struct ItemServiceImpl {
-    item_store: Arc<dyn ItemStore>,
-    account_store: Arc<dyn AccountStore>,
+pub struct ItemServiceImpl<Store>
+where
+    Store: ItemStore + AccountStore,
+{
+    store: Arc<Store>,
     plaid: Arc<plaid::Client>,
 }
 
-impl ItemServiceImpl {
-    pub fn new(
-        item_store: Arc<dyn ItemStore>,
-        account_store: Arc<dyn AccountStore>,
-        plaid: Arc<plaid::Client>,
-    ) -> Self {
-        Self {
-            item_store,
-            account_store,
-            plaid,
-        }
+impl<Store> ItemServiceImpl<Store>
+where
+    Store: ItemStore + AccountStore,
+{
+    pub fn new(store: Arc<Store>, plaid: Arc<plaid::Client>) -> Self {
+        Self { store, plaid }
     }
 }
 
@@ -72,7 +69,10 @@ fn row_to_proto(row: ItemRow, account_rows: Vec<AccountRow>) -> Item {
 }
 
 #[async_trait]
-impl ItemService for ItemServiceImpl {
+impl<Store> ItemService for ItemServiceImpl<Store>
+where
+    Store: ItemStore + AccountStore + 'static,
+{
     async fn list_items(
         &self,
         request: Request<ListItemsRequest>,
@@ -89,7 +89,7 @@ impl ItemService for ItemServiceImpl {
             .map_err(|e| Status::invalid_argument(format!("'user_id' is invalid: {:?}", e)))?;
 
         let (rows_plus_one, total_count) = self
-            .item_store
+            .store
             .list_and_count_items_for_user((page_size + 1).into(), page_token, user_id)
             .await?;
 
@@ -99,10 +99,7 @@ impl ItemService for ItemServiceImpl {
         // Map rows to protos and serialize page token.
         let mut items = Vec::new();
         for row in page_rows {
-            let account_rows = self
-                .account_store
-                .list_accounts_for_item(row.item_id)
-                .await?;
+            let account_rows = self.store.list_accounts_for_item(row.item_id).await?;
             items.push(row_to_proto(row.clone(), account_rows));
         }
 
@@ -177,7 +174,7 @@ impl ItemService for ItemServiceImpl {
 
         let now = Utc::now();
         let item_row = self
-            .item_store
+            .store
             .add_item(NewItemRow {
                 create_time: now,
                 update_time: now,
@@ -197,7 +194,7 @@ impl ItemService for ItemServiceImpl {
         for plaid_account in plaid_account_response.accounts {
             let now = Utc::now();
             account_rows.push(
-                self.account_store
+                self.store
                     .add_account(NewAccountRow {
                         create_time: now,
                         update_time: now,

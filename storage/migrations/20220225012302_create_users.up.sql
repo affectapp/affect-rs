@@ -5,4 +5,4 @@ CREATE TABLE users (
     firebase_uid VARCHAR(255) NOT NULL UNIQUE,
     firebase_email VARCHAR(255) NOT NULL,
     PRIMARY KEY (user_id)
-);
+)

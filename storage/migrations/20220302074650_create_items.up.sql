@@ -7,4 +7,4 @@ CREATE TABLE items (
   plaid_access_token VARCHAR(255) NOT NULL,
   PRIMARY KEY (item_id),
   CONSTRAINT fk_item_to_user FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
+)
