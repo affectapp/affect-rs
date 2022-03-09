@@ -1,8 +1,9 @@
+use crate::prost::into::IntoProto;
 use affect_api::affect::{
-    cause_service_server::CauseService, Cause, CauseRecipient, CreateCauseRequest,
-    ListCausesRequest, ListCausesResponse,
+    cause_service_server::CauseService, Cause, CreateCauseRequest, ListCausesRequest,
+    ListCausesResponse,
 };
-use affect_status::invalid_argument;
+use affect_status::{invalid_argument, well_known::invalid_field};
 use affect_storage::{
     database::{
         client::DatabaseClient,
@@ -10,13 +11,12 @@ use affect_storage::{
     },
     page_token::{PageToken, PageTokenable},
     stores::{
-        cause::{CausePageToken, CauseRow, CauseStore},
+        cause::{CausePageToken, CauseStore},
         cause_and_recipient::CauseAndRecipientStore,
-        cause_recipient::{CauseRecipientRow, CauseRecipientStore},
+        cause_recipient::CauseRecipientStore,
     },
 };
 use async_trait::async_trait;
-use prost_types::Timestamp;
 use std::{
     cmp::{max, min},
     marker::PhantomData,
@@ -49,28 +49,6 @@ where
     }
 }
 
-fn row_to_proto(row: CauseRow, cause_recipient_rows: Vec<CauseRecipientRow>) -> Cause {
-    Cause {
-        cause_id: row.cause_id.to_string(),
-        create_time: Some(Timestamp {
-            seconds: row.create_time.timestamp(),
-            nanos: row.create_time.timestamp_subsec_nanos() as i32,
-        }),
-        update_time: Some(Timestamp {
-            seconds: row.update_time.timestamp(),
-            nanos: row.update_time.timestamp_subsec_nanos() as i32,
-        }),
-        user_id: row.user_id.to_string(),
-        recipients: cause_recipient_rows
-            .into_iter()
-            .map(|cause_recipient_row| CauseRecipient {
-                cause_id: cause_recipient_row.cause_id.to_string(),
-                nonprofit_id: cause_recipient_row.nonprofit_id.to_string(),
-            })
-            .collect(),
-    }
-}
-
 #[async_trait]
 impl<Client, Store, TStore> CauseService for CauseServiceImpl<Client, Store, TStore>
 where
@@ -87,7 +65,7 @@ where
         let user_id = message
             .user_id
             .parse::<Uuid>()
-            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+            .map_err(|e| invalid_field("user_id", e))?;
 
         let mut recipient_nonprofit_ids = Vec::new();
         for recipient in message.recipients {
@@ -105,7 +83,9 @@ where
             .await?;
         txn.commit().await?;
 
-        Ok(Response::new(row_to_proto(cause_row, cause_recipient_rows)))
+        Ok(Response::new(
+            (cause_row, cause_recipient_rows).into_proto()?,
+        ))
     }
 
     async fn list_causes(
@@ -140,7 +120,7 @@ where
                 .on_demand()
                 .list_cause_recipients_for_cause(row.cause_id)
                 .await?;
-            causes.push(row_to_proto(row.clone(), cause_recipient_rows));
+            causes.push((row.clone(), cause_recipient_rows).into_proto()?);
         }
 
         // Next page token or empty string.

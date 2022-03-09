@@ -1,11 +1,11 @@
+use crate::prost::into::IntoProto;
 use affect_api::affect::{nonprofit_service_server::NonprofitService, ListNonprofitsRequest, *};
 use affect_status::invalid_argument;
 use affect_storage::{
     page_token::{PageToken, PageTokenable},
-    stores::nonprofit::{NonprofitPageToken, NonprofitRow, NonprofitStore},
+    stores::nonprofit::{NonprofitPageToken, NonprofitStore},
 };
 use async_trait::async_trait;
-use prost_types::Timestamp;
 use std::{
     cmp::{max, min},
     sync::Arc,
@@ -19,25 +19,6 @@ pub struct NonprofitServiceImpl {
 impl NonprofitServiceImpl {
     pub fn new(nonprofit_store: Arc<dyn NonprofitStore>) -> Self {
         Self { nonprofit_store }
-    }
-}
-
-fn nonprofit_row_to_proto(row: NonprofitRow) -> Nonprofit {
-    Nonprofit {
-        nonprofit_id: row.nonprofit_id.to_string(),
-        create_time: Some(Timestamp {
-            seconds: row.create_time.timestamp(),
-            nanos: row.create_time.timestamp_subsec_nanos() as i32,
-        }),
-        update_time: Some(Timestamp {
-            seconds: row.update_time.timestamp(),
-            nanos: row.update_time.timestamp_subsec_nanos() as i32,
-        }),
-        icon_url: row.icon_url,
-        name: row.name,
-        ein: row.ein,
-        mission: row.mission,
-        category: row.category,
     }
 }
 
@@ -71,8 +52,8 @@ impl NonprofitService for NonprofitServiceImpl {
         // Map rows to protos and serialize page token.
         let nonprofits = page_rows
             .iter()
-            .map(|row| nonprofit_row_to_proto(row.clone()))
-            .collect();
+            .map(|row| Ok(row.clone().into_proto()?))
+            .collect::<Result<Vec<Nonprofit>, Status>>()?;
 
         // Next page token or empty string.
         let next_page_token = next_page_rows

@@ -1,8 +1,8 @@
 use crate::firebase::FirebaseAuth;
+use crate::prost::into::IntoProto;
 use affect_api::affect::{get_user_request::Identifier, user_service_server::UserService, *};
-use affect_storage::stores::user::{NewUserRow, UserRow, UserStore};
+use affect_storage::stores::user::{NewUserRow, UserStore};
 use chrono::Utc;
-use prost_types::Timestamp;
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
 
@@ -17,21 +17,6 @@ impl UserServiceImpl {
             user_store,
             firebase_auth,
         }
-    }
-}
-
-fn user_row_to_proto(user_row: UserRow) -> User {
-    User {
-        user_id: user_row.user_id.to_string(),
-        create_time: Some(Timestamp {
-            seconds: user_row.create_time.timestamp(),
-            nanos: user_row.create_time.timestamp_subsec_nanos() as i32,
-        }),
-        update_time: Some(Timestamp {
-            seconds: user_row.update_time.timestamp(),
-            nanos: user_row.update_time.timestamp_subsec_nanos() as i32,
-        }),
-        firebase_uid: user_row.firebase_uid,
     }
 }
 
@@ -56,7 +41,7 @@ impl UserService for UserServiceImpl {
             })
             .await?;
 
-        Ok(Response::new(user_row_to_proto(user_row)))
+        Ok(Response::new(user_row.into_proto()?))
     }
 
     async fn get_user(&self, req: Request<GetUserRequest>) -> Result<Response<User>, Status> {
@@ -71,7 +56,7 @@ impl UserService for UserServiceImpl {
         }?
         .ok_or(Status::not_found("user not found"))?;
 
-        Ok(Response::new(user_row_to_proto(user_row)))
+        Ok(Response::new(user_row.into_proto()?))
     }
 
     async fn list_users(

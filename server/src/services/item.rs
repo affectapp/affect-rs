@@ -1,13 +1,14 @@
+use crate::prost::into::IntoProto;
 use affect_api::affect::{
-    item_service_server::ItemService, Account, CreateItemRequest, GenerateLinkTokenRequest, Item,
-    LinkToken, ListItemsRequest, ListItemsResponse,
+    item_service_server::ItemService, CreateItemRequest, GenerateLinkTokenRequest, Item, LinkToken,
+    ListItemsRequest, ListItemsResponse,
 };
 use affect_status::{internal, invalid_argument};
 use affect_storage::{
     page_token::{PageToken, PageTokenable},
     stores::{
-        account::{AccountRow, AccountStore, NewAccountRow},
-        item::{ItemPageToken, ItemRow, ItemStore, NewItemRow},
+        account::{AccountStore, NewAccountRow},
+        item::{ItemPageToken, ItemStore, NewItemRow},
     },
 };
 use async_trait::async_trait;
@@ -34,38 +35,6 @@ where
 {
     pub fn new(store: Arc<Store>, plaid: Arc<plaid::Client>) -> Self {
         Self { store, plaid }
-    }
-}
-
-fn row_to_proto(row: ItemRow, account_rows: Vec<AccountRow>) -> Item {
-    Item {
-        item_id: row.item_id.to_string(),
-        create_time: Some(Timestamp {
-            seconds: row.create_time.timestamp(),
-            nanos: row.create_time.timestamp_subsec_nanos() as i32,
-        }),
-        update_time: Some(Timestamp {
-            seconds: row.update_time.timestamp(),
-            nanos: row.update_time.timestamp_subsec_nanos() as i32,
-        }),
-        user_id: row.user_id.to_string(),
-        accounts: account_rows
-            .into_iter()
-            .map(|account_row| Account {
-                account_id: account_row.account_id.to_string(),
-                create_time: Some(Timestamp {
-                    seconds: account_row.create_time.timestamp(),
-                    nanos: account_row.create_time.timestamp_subsec_nanos() as i32,
-                }),
-                update_time: Some(Timestamp {
-                    seconds: account_row.update_time.timestamp(),
-                    nanos: account_row.update_time.timestamp_subsec_nanos() as i32,
-                }),
-                item_id: account_row.item_id.to_string(),
-                name: account_row.name,
-                mask: account_row.mask.unwrap_or("".to_string()),
-            })
-            .collect(),
     }
 }
 
@@ -162,9 +131,7 @@ where
                     .await?,
             );
         }
-
-        let item = row_to_proto(item_row, account_rows);
-        Ok(Response::new(item))
+        Ok(Response::new((item_row, account_rows).into_proto()?))
     }
 
     async fn list_items(
@@ -194,7 +161,7 @@ where
         let mut items = Vec::new();
         for row in page_rows {
             let account_rows = self.store.list_accounts_for_item(row.item_id).await?;
-            items.push(row_to_proto(row.clone(), account_rows));
+            items.push((row.clone(), account_rows).into_proto()?);
         }
 
         // Next page token or empty string.
