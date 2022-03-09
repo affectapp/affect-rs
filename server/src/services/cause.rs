@@ -1,4 +1,4 @@
-use crate::prost::into::IntoProto;
+use crate::protobuf::into::IntoProto;
 use affect_api::affect::{
     cause_service_server::CauseService, Cause, CreateCauseRequest, ListCausesRequest,
     ListCausesResponse,

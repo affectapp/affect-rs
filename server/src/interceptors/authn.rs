@@ -1,15 +1,11 @@
-use crate::firebase::FirebaseAuth;
-use crate::tonic::async_interceptor::AsyncInterceptor;
-use affect_api::affect::auth_metadata::PeerToken;
-use affect_api::affect::AuthMetadata;
+use crate::{firebase::FirebaseAuth, tonic::async_interceptor::AsyncInterceptor};
+use affect_api::affect::{auth_metadata::PeerToken, AuthMetadata};
 use affect_storage::stores::user::{UserRow, UserStore};
 use async_trait::async_trait;
-use hyper::Body;
-use hyper::Request;
+use hyper::{Body, Request};
 use log::debug;
 use prost::Message;
-use std::io::Cursor;
-use std::sync::Arc;
+use std::{io::Cursor, sync::Arc};
 use tonic::Status;
 
 #[derive(Clone, Debug)]

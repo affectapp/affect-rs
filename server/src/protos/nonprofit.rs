@@ -1,4 +1,4 @@
-use crate::prost::from::ProtoFrom;
+use crate::protobuf::from::ProtoFrom;
 use affect_api::affect::Nonprofit;
 use affect_storage::stores::nonprofit::NonprofitRow;
 use prost_types::Timestamp;

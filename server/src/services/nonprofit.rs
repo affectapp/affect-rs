@@ -1,4 +1,4 @@
-use crate::prost::into::IntoProto;
+use crate::protobuf::into::IntoProto;
 use affect_api::affect::{nonprofit_service_server::NonprofitService, ListNonprofitsRequest, *};
 use affect_status::invalid_argument;
 use affect_storage::{

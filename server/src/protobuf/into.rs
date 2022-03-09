@@ -1,4 +1,4 @@
-use crate::prost::from::{FromProto, ProtoFrom};
+use crate::protobuf::from::{FromProto, ProtoFrom};
 use tonic::Status;
 
 pub trait IntoProto<P>

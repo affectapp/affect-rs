@@ -1,5 +1,4 @@
-use crate::firebase::FirebaseAuth;
-use crate::prost::into::IntoProto;
+use crate::{firebase::FirebaseAuth, protobuf::into::IntoProto};
 use affect_api::affect::{get_user_request::Identifier, user_service_server::UserService, *};
 use affect_storage::stores::user::{NewUserRow, UserStore};
 use chrono::Utc;

@@ -1,4 +1,4 @@
-use crate::prost::into::IntoProto;
+use crate::protobuf::into::IntoProto;
 use affect_api::affect::{
     item_service_server::ItemService, CreateItemRequest, GenerateLinkTokenRequest, Item, LinkToken,
     ListItemsRequest, ListItemsResponse,

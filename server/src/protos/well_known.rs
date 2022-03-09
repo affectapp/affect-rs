@@ -1,4 +1,4 @@
-use crate::prost::from::{FromProto, ProtoFrom};
+use crate::protobuf::from::{FromProto, ProtoFrom};
 use affect_status::invalid_argument;
 use chrono::{DateTime, TimeZone, Utc};
 use prost_types::Timestamp;

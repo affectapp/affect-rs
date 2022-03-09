@@ -1,4 +1,4 @@
-use crate::prost::from::ProtoFrom;
+use crate::protobuf::from::ProtoFrom;
 use affect_api::affect::{Cause, CauseRecipient};
 use affect_storage::stores::cause::CauseRow;
 use affect_storage::stores::cause_recipient::CauseRecipientRow;
