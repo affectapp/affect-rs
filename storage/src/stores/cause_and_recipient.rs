@@ -1,5 +1,5 @@
 use crate::{
-    sqlx::store::TransactionalStore,
+    database::store::TransactionalStore,
     stores::{
         cause::{CauseRow, CauseStore, NewCauseRow},
         cause_recipient::{CauseRecipientRow, CauseRecipientStore, NewCauseRecipientRow},

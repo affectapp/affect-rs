@@ -1,4 +1,4 @@
-use affect_storage::sqlx::pool::PgPool;
+use affect_storage::sqlx::client::PgDatabaseClient;
 use anyhow::Context;
 use testcontainers::{
     clients::Cli,
@@ -7,7 +7,7 @@ use testcontainers::{
 };
 
 pub struct PgContainer<'a> {
-    pub pool: PgPool,
+    pub pool: PgDatabaseClient,
 
     // Owns container instance because when container is dropped, the
     // container is stopped.
@@ -42,7 +42,7 @@ pub async fn setup_pg_container<'a>(docker_cli: &'a Cli) -> Result<PgContainer<'
     );
 
     let container = PgContainer {
-        pool: PgPool::connect(postgres_uri).await?,
+        pool: PgDatabaseClient::connect(postgres_uri).await?,
         container,
     };
 

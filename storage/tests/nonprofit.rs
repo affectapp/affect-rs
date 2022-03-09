@@ -1,4 +1,4 @@
-use affect_storage::stores::nonprofit::*;
+use affect_storage::{database::client::DatabaseClient, stores::nonprofit::*};
 use chrono::{TimeZone, Utc};
 use testcontainers::clients::Cli;
 use uuid::Uuid;
@@ -9,7 +9,7 @@ mod common;
 async fn create_nonprofit() -> Result<(), anyhow::Error> {
     let docker = Cli::default();
     let container = common::setup_pg_container(&docker).await?;
-    let store = container.pool.store();
+    let store = container.pool.on_demand();
 
     let mut expected_nonprofit = NonprofitRow {
         nonprofit_id: Uuid::new_v4(),

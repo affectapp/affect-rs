@@ -2,10 +2,13 @@ use affect_api::affect::{
     cause_service_server::CauseService, Cause, CauseRecipient, CreateCauseRequest,
     ListCausesRequest, ListCausesResponse,
 };
+use affect_status::invalid_argument;
 use affect_storage::{
+    database::{
+        client::DatabaseClient,
+        store::{OnDemandStore, TransactionalStore},
+    },
     page_token::{PageToken, PageTokenable},
-    sqlx::store::OnDemandStore,
-    sqlx::store::TransactionalStore,
     stores::{
         cause::{CausePageToken, CauseRow, CauseStore},
         cause_and_recipient::CauseAndRecipientStore,
@@ -22,24 +25,26 @@ use std::{
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-pub struct CauseServiceImpl<Store, TStore>
+pub struct CauseServiceImpl<Client, Store, TStore>
 where
-    Store: CauseStore + CauseRecipientStore + OnDemandStore<TStore>,
+    Client: DatabaseClient<Store, TStore>,
+    Store: CauseStore + CauseRecipientStore + OnDemandStore,
     TStore: CauseStore + CauseRecipientStore + TransactionalStore,
 {
-    store: Arc<Store>,
-    _txn_store: PhantomData<TStore>,
+    database: Arc<Client>,
+    _marker: PhantomData<fn() -> (Store, TStore)>,
 }
 
-impl<Store, TStore> CauseServiceImpl<Store, TStore>
+impl<Client, Store, TStore> CauseServiceImpl<Client, Store, TStore>
 where
-    Store: CauseStore + CauseRecipientStore + OnDemandStore<TStore>,
+    Client: DatabaseClient<Store, TStore>,
+    Store: CauseStore + CauseRecipientStore + OnDemandStore,
     TStore: CauseStore + CauseRecipientStore + TransactionalStore,
 {
-    pub fn new(store: Arc<Store>) -> Self {
+    pub fn new(client: Arc<Client>) -> Self {
         Self {
-            store,
-            _txn_store: PhantomData::default(),
+            database: client,
+            _marker: PhantomData,
         }
     }
 }
@@ -67,11 +72,42 @@ fn row_to_proto(row: CauseRow, cause_recipient_rows: Vec<CauseRecipientRow>) -> 
 }
 
 #[async_trait]
-impl<Store, TStore> CauseService for CauseServiceImpl<Store, TStore>
+impl<Client, Store, TStore> CauseService for CauseServiceImpl<Client, Store, TStore>
 where
-    Store: CauseStore + CauseRecipientStore + OnDemandStore<TStore> + 'static,
+    Client: DatabaseClient<Store, TStore> + 'static,
+    Store: CauseStore + CauseRecipientStore + OnDemandStore + 'static,
     TStore: CauseStore + CauseRecipientStore + TransactionalStore + 'static,
 {
+    async fn create_cause(
+        &self,
+        request: Request<CreateCauseRequest>,
+    ) -> Result<Response<Cause>, Status> {
+        let message = request.into_inner();
+
+        let user_id = message
+            .user_id
+            .parse::<Uuid>()
+            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+
+        let mut recipient_nonprofit_ids = Vec::new();
+        for recipient in message.recipients {
+            recipient_nonprofit_ids.push(
+                recipient
+                    .nonprofit_id
+                    .parse::<Uuid>()
+                    .map_err(|e| invalid_argument!("'nonprofit_id' is invalid: {:?}", e))?,
+            );
+        }
+
+        let txn = self.database.begin().await?;
+        let (cause_row, cause_recipient_rows) = txn
+            .add_cause_and_recipients(user_id, recipient_nonprofit_ids)
+            .await?;
+        txn.commit().await?;
+
+        Ok(Response::new(row_to_proto(cause_row, cause_recipient_rows)))
+    }
+
     async fn list_causes(
         &self,
         request: Request<ListCausesRequest>,
@@ -80,15 +116,16 @@ where
 
         let page_size = min(max(message.page_size, 1), 100);
         let page_token = CausePageToken::deserialize_page_token(&message.page_token)
-            .map_err(|e| Status::invalid_argument(format!("'page_token' is invalid: {:?}", e)))?;
+            .map_err(|e| invalid_argument!("'page_token' is invalid: {:?}", e))?;
         let user_id = Some(message.user_id)
             .filter(|s| !s.is_empty())
             .ok_or(Status::invalid_argument("'user_id' must be specified"))?
             .parse::<Uuid>()
-            .map_err(|e| Status::invalid_argument(format!("'user_id' is invalid: {:?}", e)))?;
+            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
 
         let (rows_plus_one, total_count) = self
-            .store
+            .database
+            .on_demand()
             .list_and_count_causes_for_user((page_size + 1).into(), page_token, user_id)
             .await?;
 
@@ -99,7 +136,8 @@ where
         let mut causes = Vec::new();
         for row in page_rows {
             let cause_recipient_rows = self
-                .store
+                .database
+                .on_demand()
                 .list_cause_recipients_for_cause(row.cause_id)
                 .await?;
             causes.push(row_to_proto(row.clone(), cause_recipient_rows));
@@ -116,32 +154,5 @@ where
             next_page_token,
             total_count,
         }))
-    }
-
-    async fn create_cause(
-        &self,
-        request: Request<CreateCauseRequest>,
-    ) -> Result<Response<Cause>, Status> {
-        let message = request.into_inner();
-
-        let user_id = message
-            .user_id
-            .parse::<Uuid>()
-            .map_err(|e| Status::invalid_argument(format!("'user_id' is invalid: {:?}", e)))?;
-
-        let mut recipient_nonprofit_ids = Vec::new();
-        for recipient in message.recipients {
-            recipient_nonprofit_ids.push(recipient.nonprofit_id.parse::<Uuid>().map_err(|e| {
-                Status::invalid_argument(format!("'nonprofit_id' is invalid: {:?}", e))
-            })?);
-        }
-
-        let txn = self.store.begin().await?;
-        let (cause_row, cause_recipient_rows) = txn
-            .add_cause_and_recipients(user_id, recipient_nonprofit_ids)
-            .await?;
-        txn.commit().await?;
-
-        Ok(Response::new(row_to_proto(cause_row, cause_recipient_rows)))
     }
 }

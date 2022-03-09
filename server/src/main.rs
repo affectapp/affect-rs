@@ -14,7 +14,7 @@ use affect_server::{
     },
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
-use affect_storage::sqlx::pool::PgPool;
+use affect_storage::{database::client::DatabaseClient, sqlx::client::PgDatabaseClient};
 use log::info;
 use std::{sync::Arc, time::Duration};
 use tonic::transport::Server;
@@ -46,11 +46,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     // Database connection and stores:
     info!("Connecting to database");
-    let pool = Arc::new(PgPool::connect(config.postgres.uri).await?);
-    let store = Arc::new(pool.store());
+    let database = Arc::new(PgDatabaseClient::connect(config.postgres.uri).await?);
+    let store = Arc::new(database.on_demand());
 
     info!("Running migrations (if any)");
-    pool.run_migrations().await?;
+    database.run_migrations().await?;
 
     // Dependencies:
     let firebase_auth =
@@ -83,7 +83,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let user_service = UserServiceImpl::new(store.clone(), firebase_auth.clone());
     let nonprofit_service = NonprofitServiceImpl::new(store.clone());
     let item_service = ItemServiceImpl::new(store.clone(), plaid_client.clone());
-    let cause_service = CauseServiceImpl::new(store.clone());
+    let cause_service = CauseServiceImpl::new(database.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {
         (None, Some(port_env_var)) => std::env::var(&port_env_var)?.parse()?,

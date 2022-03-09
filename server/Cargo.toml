@@ -6,6 +6,7 @@ version = "0.1.0"
 [dependencies]
 affect-api = { git = "https://github.com/affectapp/api", rev = "cd58288" }
 affect-storage = { path = "../storage" }
+affect-status = { path = "../status" }
 async-trait = "0.1"
 base64 = "0.13"
 chrono = { version = "0.4" }

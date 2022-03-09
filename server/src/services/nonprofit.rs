@@ -1,4 +1,5 @@
 use affect_api::affect::{nonprofit_service_server::NonprofitService, ListNonprofitsRequest, *};
+use affect_status::invalid_argument;
 use affect_storage::{
     page_token::{PageToken, PageTokenable},
     stores::nonprofit::{NonprofitPageToken, NonprofitRow, NonprofitStore},
@@ -57,7 +58,7 @@ impl NonprofitService for NonprofitServiceImpl {
 
         let page_size = min(max(message.page_size, 1), 100);
         let page_token = NonprofitPageToken::deserialize_page_token(&message.page_token)
-            .map_err(|e| Status::invalid_argument(format!("'page_token' is invalid: {:?}", e)))?;
+            .map_err(|e| invalid_argument!("'page_token' is invalid: {:?}", e))?;
 
         let (rows_plus_one, total_count) = self
             .nonprofit_store

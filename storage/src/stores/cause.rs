@@ -44,7 +44,7 @@ impl PageTokenable<CausePageToken> for CauseRow {
 
 // #[cfg_attr(test, mockall::automock)]
 #[async_trait]
-pub trait CauseStore /* : Sync + Send */ {
+pub trait CauseStore {
     async fn add_cause(&self, new_row: NewCauseRow) -> Result<CauseRow, Error>;
 
     async fn list_causes_for_user(

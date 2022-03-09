@@ -4,7 +4,10 @@ use affect_api::affect::{
 };
 use affect_server::services::cause::CauseServiceImpl;
 use affect_storage::{
-    sqlx::store::{OnDemandStore, TransactionalStore},
+    database::{
+        client::DatabaseClient,
+        store::{OnDemandStore, TransactionalStore},
+    },
     stores::{cause::*, cause_recipient::*},
 };
 use async_trait::async_trait;
@@ -17,7 +20,7 @@ use uuid::Uuid;
 
 #[tokio::test]
 async fn create_cause() -> Result<(), anyhow::Error> {
-    let mut store = MockStore::new();
+    let mut database = MockDatabaseClient::new();
     let mut txn = MockStore::new();
 
     // Transaction
@@ -53,9 +56,9 @@ async fn create_cause() -> Result<(), anyhow::Error> {
     }
 
     // Begin transaction.
-    store.expect_begin().times(1).return_once(|| Ok(txn));
+    database.expect_begin().times(1).return_once(|| Ok(txn));
 
-    let cause_service = CauseServiceServer::new(CauseServiceImpl::new(Arc::new(store)));
+    let cause_service = CauseServiceServer::new(CauseServiceImpl::new(Arc::new(database)));
     let addr = "127.0.0.1:54321";
     let server = tokio::spawn(async move {
         Server::builder()
@@ -80,6 +83,17 @@ async fn create_cause() -> Result<(), anyhow::Error> {
 
     server.abort();
     Ok(())
+}
+
+mock! {
+    pub DatabaseClient {}
+
+    #[async_trait]
+    impl DatabaseClient<MockStore, MockStore> for DatabaseClient {
+        fn on_demand(&self) -> MockStore;
+
+        async fn begin(&self) -> Result<MockStore, affect_storage::Error>;
+    }
 }
 
 mock! {
@@ -113,8 +127,7 @@ mock! {
     }
 
     #[async_trait]
-    impl OnDemandStore<MockStore> for Store {
-        async fn begin(&self) -> Result<MockStore, affect_storage::Error>;
+    impl OnDemandStore for Store {
     }
 
     #[async_trait]

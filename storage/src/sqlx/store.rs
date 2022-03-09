@@ -1,19 +1,11 @@
-use crate::Error;
+use crate::{
+    database::store::{OnDemandStore, TransactionalStore},
+    Error,
+};
 use async_trait::async_trait;
 use futures::lock::Mutex;
 use sqlx::{Pool, Postgres, Transaction};
 use std::sync::Arc;
-
-/// Store which selects connections from the pool per query. A transactional
-/// store can be created from this store using begin().
-#[async_trait]
-pub trait OnDemandStore<TStore>
-where
-    TStore: TransactionalStore,
-{
-    // Selects a connection from the pool and starts a transaction.
-    async fn begin(&self) -> Result<TStore, Error>;
-}
 
 #[derive(Debug)]
 pub struct PgOnDemandStore {
@@ -27,25 +19,7 @@ impl PgOnDemandStore {
 }
 
 #[async_trait]
-impl<'a> OnDemandStore<PgTransactionalStore<'a>> for PgOnDemandStore {
-    async fn begin(&self) -> Result<PgTransactionalStore<'a>, Error> {
-        let txn = self.pool.begin().await?;
-        Ok(PgTransactionalStore::new(Arc::new(Mutex::new(txn))))
-    }
-}
-
-/// Store which, while a reference exists, holds an open connection and
-/// transaction. The transaction should either be committed or rolled back.
-/// If neither happen, when this store is dropped the transaction will be
-/// rolled back.
-#[async_trait]
-pub trait TransactionalStore {
-    /// Commit the transaction, returning error if that fails.
-    async fn commit(self) -> Result<(), Error>;
-
-    /// Rolls back the transaction, returning error if that fails.
-    async fn rollback(self) -> Result<(), Error>;
-}
+impl OnDemandStore for PgOnDemandStore {}
 
 #[derive(Debug)]
 pub struct PgTransactionalStore<'a> {

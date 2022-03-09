@@ -1,3 +1,4 @@
+pub mod database;
 pub mod page_token;
 pub mod sqlx;
 pub mod stores;
@@ -26,6 +27,6 @@ pub enum Error {
 
 impl From<Error> for affect_status::Status {
     fn from(error: Error) -> Self {
-        return affect_status::Status::internal(format!("storage error: {:?}", error));
+        return affect_status::internal!("storage error: {:?}", error);
     }
 }
