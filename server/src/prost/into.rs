@@ -1,5 +1,4 @@
 use crate::prost::from::{FromProto, ProtoFrom};
-use prost::Message;
 use tonic::Status;
 
 pub trait IntoProto<P>
