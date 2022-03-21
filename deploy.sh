@@ -11,7 +11,7 @@ docker build --tag ${TAG} . && \
 #   --machine-type=n1-highcpu-8 \
 #    --timeout=3600s
 if [ $? -ne 0 ]; then
-  kill 0
+  exit 2
 fi
 
 # Run image on cloud.
@@ -23,3 +23,11 @@ gcloud beta run deploy ${SERVICE} \
   --cpu-throttling \
   --cpu=1 \
   --region=us-west2
+if [ $? -ne 0 ]; then
+  exit 2
+fi
+
+gcloud run services update-traffic \
+  affect-server \
+  --region=us-west2 \
+  --to-latest

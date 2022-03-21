@@ -4,22 +4,26 @@
 
 # Start server in background.
 ./affect-server 2>&1 &
-AFFECT_SERVER_PID=$!
-echo "Affect PID: ${AFFECT_SERVER_PID}"
+echo "Affect PID: $!"
+
+# Wait up to N seconds for affect to come online before
+# starting envoy proxy.
+elapsed=0
 while ! nc -z localhost ${AFFECT_SERVER_PORT}; do
   sleep 1
+  elapsed=$((counter + 1))
+  if [[ "$counter" -gt 10 ]]; then
+    echo "Affect server never came online!"
+    exit 2
+  fi
 done
 
 # Substitute env variables to produce final envoy config.
+# Then run envoy proxy.
 envsubst < ./envoy.yaml > ./envoy-final.yaml
-
-# Start envoy in background.
 ./envoy --config-path ./envoy-final.yaml --service-cluster backend-proxy 2>&1 &
-ENVOY_PID=$!
-echo "Envoy PID: ${ENVOY_PID}"
+echo "Envoy PID: $!"
 
-trap "jobs -p | xargs -r kill" INT TERMRM
-
-while nc -z localhost ${AFFECT_SERVER_PORT}; do
-  sleep 1
-done
+# On kill/ctrl+c, also kill background processes.
+trap "$(jobs -p | xargs -r kill)" SIGHUP SIGINT SIGTERM
+wait

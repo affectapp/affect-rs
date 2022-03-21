@@ -9,7 +9,7 @@ export CONFIG=`cat ./server/affect.toml`
 # Build image.
 docker build -t affect-server .
 if [ $? -ne 0 ]; then
-  return
+  exit 2
 fi
 
 # Run container interactively.
@@ -28,5 +28,5 @@ docker run -it \
   -e CONFIG \
   affect-server
 if [ $? -ne 0 ]; then
-  return
+  exit 2
 fi
