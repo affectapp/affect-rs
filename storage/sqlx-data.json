@@ -191,8 +191,8 @@
       ]
     }
   },
-  "44821bac945efa0b5c510d4c6b1dc2699d709cdb5fbf71d11734237e19b017f5": {
-    "query": "SELECT COUNT(*) AS count\nFROM nonprofits;",
+  "436655b37783fe78c38db1a3fcf0cb83615c4ea422d19240487ccc7d0e4424c9": {
+    "query": "SELECT COUNT(*) AS count\nFROM nonprofits\nWHERE name LIKE CONCAT('%', $1::text, '%')",
     "describe": {
       "columns": [
         {
@@ -202,10 +202,152 @@
         }
       ],
       "parameters": {
-        "Left": []
+        "Left": [
+          "Text"
+        ]
       },
       "nullable": [
         null
+      ]
+    }
+  },
+  "4e94535808d9fce32f5c6ac4c1356f48a6b791877f4279dd5e271a4f0ad19265": {
+    "query": "SELECT *\nFROM nonprofits\nWHERE name LIKE CONCAT('%', $1::text, '%')\nORDER BY create_time ASC,\n  nonprofit_id ASC\nLIMIT $2",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "change_nonprofit_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "icon_url",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "ein",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 7,
+          "name": "mission",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 8,
+          "name": "category",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "548aed2265d7e58a95d9d254dd64bfbc55b33a5e6a230abfd37d3c431bcdeecc": {
+    "query": "SELECT *\nFROM nonprofits\nWHERE name LIKE CONCAT('%', $1::text, '%')\n  AND (create_time, nonprofit_id) >= ($2, $3)\nORDER BY create_time ASC,\n  nonprofit_id ASC\nLIMIT $4",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "change_nonprofit_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "icon_url",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "ein",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 7,
+          "name": "mission",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 8,
+          "name": "category",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Timestamptz",
+          "Uuid",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
       ]
     }
   },
@@ -438,6 +580,24 @@
         false,
         false,
         false
+      ]
+    }
+  },
+  "815e33bb206cf58561f08e459db5a60762033dc238e3f91c747369c84b7016b3": {
+    "query": "SELECT COUNT(*) AS count\nFROM nonprofits",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null
       ]
     }
   },
