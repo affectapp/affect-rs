@@ -1,3 +1,3 @@
 SELECT COUNT(*) AS count
 FROM nonprofits
-WHERE name LIKE CONCAT('%', $1::text, '%')
+WHERE name ILIKE CONCAT('%', $1::text, '%')
