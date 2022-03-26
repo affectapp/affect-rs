@@ -1,9 +1,13 @@
 use crate::protobuf::into::IntoProto;
 use affect_api::affect::{
-    item_service_server::ItemService, CreateItemRequest, GenerateLinkTokenRequest, Item, LinkToken,
-    ListItemsRequest, ListItemsResponse,
+    item_service_server::ItemService, CreateItemRequest, DeleteItemRequest,
+    GenerateLinkTokenRequest, Item, LinkToken, ListItemsRequest, ListItemsResponse,
 };
-use affect_status::{internal, invalid_argument};
+use affect_status::{internal, invalid_argument, not_found};
+use affect_storage::database::client::DatabaseClient;
+use affect_storage::database::store::{OnDemandStore, TransactionalStore};
+use affect_storage::stores::item_and_account::ItemAndAccountStore;
+use affect_storage::stores::user::UserStore;
 use affect_storage::{
     page_token::{PageToken, PageTokenable},
     stores::{
@@ -14,6 +18,7 @@ use affect_storage::{
 use async_trait::async_trait;
 use chrono::Utc;
 use prost_types::Timestamp;
+use std::marker::PhantomData;
 use std::{
     cmp::{max, min},
     sync::Arc,
@@ -21,34 +26,60 @@ use std::{
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-pub struct ItemServiceImpl<Store>
+pub struct ItemServiceImpl<Client, Store, TStore>
 where
-    Store: ItemStore + AccountStore,
+    Client: DatabaseClient<Store, TStore>,
+    Store: ItemStore + AccountStore + UserStore + OnDemandStore,
+    TStore: ItemStore + AccountStore + TransactionalStore,
 {
-    store: Arc<Store>,
+    database: Arc<Client>,
     plaid: Arc<plaid::Client>,
+    stripe: Arc<stripe::Client>,
+    _marker: PhantomData<fn() -> (Store, TStore)>,
 }
 
-impl<Store> ItemServiceImpl<Store>
+impl<Client, Store, TStore> ItemServiceImpl<Client, Store, TStore>
 where
-    Store: ItemStore + AccountStore,
+    Client: DatabaseClient<Store, TStore>,
+    Store: ItemStore + AccountStore + UserStore + OnDemandStore,
+    TStore: ItemStore + AccountStore + TransactionalStore,
 {
-    pub fn new(store: Arc<Store>, plaid: Arc<plaid::Client>) -> Self {
-        Self { store, plaid }
+    pub fn new(
+        database: Arc<Client>,
+        plaid: Arc<plaid::Client>,
+        stripe: Arc<stripe::Client>,
+    ) -> Self {
+        Self {
+            database,
+            plaid,
+            stripe,
+            _marker: PhantomData,
+        }
     }
 }
 
 #[async_trait]
-impl<Store> ItemService for ItemServiceImpl<Store>
+impl<Client, Store, TStore> ItemService for ItemServiceImpl<Client, Store, TStore>
 where
-    Store: ItemStore + AccountStore + 'static,
+    Client: DatabaseClient<Store, TStore> + 'static,
+    Store: ItemStore + AccountStore + UserStore + OnDemandStore + 'static,
+    TStore: ItemStore + AccountStore + TransactionalStore + 'static,
 {
     async fn generate_link_token(
         &self,
         request: Request<GenerateLinkTokenRequest>,
     ) -> Result<Response<LinkToken>, Status> {
         let message = request.into_inner();
-        // TODO: Validate message.user_id.
+        let user_id = message
+            .user_id
+            .parse()
+            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+        let user_row = self
+            .database
+            .on_demand()
+            .find_user_by_id(user_id)
+            .await?
+            .ok_or(not_found!("user not found"))?;
 
         #[allow(deprecated)]
         let plaid_response = self
@@ -58,7 +89,7 @@ where
                 language: plaid::SupportedLanguage::en,
                 country_codes: [plaid::SupportedCountry::US].to_vec(),
                 user: plaid::EndUser {
-                    client_user_id: message.user_id,
+                    client_user_id: user_row.user_id.to_string(),
                 },
                 products: [plaid::SupportedProduct::Transactions].to_vec(),
                 webhook: None,
@@ -91,46 +122,93 @@ where
             .user_id
             .parse()
             .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
-        let plaid_response = self
+        let user_row = self
+            .database
+            .on_demand()
+            .find_user_by_id(user_id)
+            .await?
+            .ok_or(not_found!("user not found"))?;
+
+        let plaid_item_response = self
             .plaid
             .exchange_public_token(&message.plaid_public_token)
             .await
             .map_err(|e| invalid_argument!("failed to exchange public token: {:?}", e))?;
 
+        let plaid_accounts_response = self
+            .plaid
+            .accounts(&plaid_item_response.access_token)
+            .await
+            .map_err(|e| internal!("failed to fetch accounts: {:?}", e))?;
+        let plaid_account = match plaid_accounts_response.accounts.into_iter().nth(0) {
+            Some(account) => account,
+            None => {
+                return Err(internal!("expected only 1 linked account"));
+            }
+        };
+
+        let plaid_stripe_response = self
+            .plaid
+            .stripe_create_bank_account_token(
+                &plaid_item_response.access_token,
+                &plaid_account.account_id,
+            )
+            .await
+            .map_err(|e| internal!("failed to create stripe bank account token: {:?}", e))?;
+
+        let stripe_payment_source_params =
+            stripe::PaymentSourceParams::Token(stripe::TokenId::Bank(
+                plaid_stripe_response
+                    .stripe_bank_account_token
+                    .parse()
+                    .map_err(|e| internal!("failed to parse stripe bank account token: {:?}", e))?,
+            ));
+        let stripe_payment_source = match stripe::Customer::attach_source(
+            &self.stripe,
+            &user_row
+                .stripe_customer_id
+                .parse()
+                .map_err(|e| internal!("failed to parse stripe customer id: {:?}", e))?,
+            stripe_payment_source_params,
+        )
+        .await
+        .map_err(|e| internal!("failed to attach source to stripe customer: {:?}", e))?
+        {
+            stripe::PaymentSource::BankAccount(bank_account) => bank_account,
+            _ => {
+                return Err(internal!(
+                    "expected bank account payment source returned from stripe"
+                ))
+            }
+        };
+
         let now = Utc::now();
         let item_row = self
-            .store
+            .database
+            .on_demand()
             .add_item(NewItemRow {
                 create_time: now,
                 update_time: now,
                 user_id,
-                plaid_item_id: plaid_response.item_id,
-                plaid_access_token: plaid_response.access_token,
+                plaid_item_id: plaid_item_response.item_id,
+                plaid_access_token: plaid_item_response.access_token,
             })
             .await?;
 
-        let plaid_account_response = self
-            .plaid
-            .accounts(&item_row.plaid_access_token)
-            .await
-            .map_err(|e| internal!("failed to fetch accounts: {:?}", e))?;
-
-        let mut account_rows = Vec::new();
-        for plaid_account in plaid_account_response.accounts {
-            let now = Utc::now();
-            account_rows.push(
-                self.store
-                    .add_account(NewAccountRow {
-                        create_time: now,
-                        update_time: now,
-                        item_id: item_row.item_id.clone(),
-                        plaid_account_id: plaid_account.account_id,
-                        name: plaid_account.name,
-                        mask: plaid_account.mask,
-                    })
-                    .await?,
-            );
-        }
+        let account_rows = vec![
+            self.database
+                .on_demand()
+                .add_account(NewAccountRow {
+                    create_time: now,
+                    update_time: now,
+                    item_id: item_row.item_id.clone(),
+                    plaid_account_id: plaid_account.account_id,
+                    name: plaid_account.name,
+                    mask: plaid_account.mask,
+                    stripe_bank_account_id: stripe_payment_source.id.to_string(),
+                })
+                .await?,
+        ];
         Ok(Response::new((item_row, account_rows).into_proto()?))
     }
 
@@ -145,12 +223,13 @@ where
             .map_err(|e| invalid_argument!("'page_token' is invalid: {:?}", e))?;
         let user_id = Some(message.user_id)
             .filter(|s| !s.is_empty())
-            .ok_or(Status::invalid_argument("'user_id' must be specified"))?
+            .ok_or(invalid_argument!("'user_id' must be specified"))?
             .parse::<Uuid>()
             .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
 
         let (rows_plus_one, total_count) = self
-            .store
+            .database
+            .on_demand()
             .list_and_count_items_for_user((page_size + 1).into(), page_token, user_id)
             .await?;
 
@@ -160,7 +239,11 @@ where
         // Map rows to protos and serialize page token.
         let mut items = Vec::new();
         for row in page_rows {
-            let account_rows = self.store.list_accounts_for_item(row.item_id).await?;
+            let account_rows = self
+                .database
+                .on_demand()
+                .list_accounts_for_item(row.item_id)
+                .await?;
             items.push((row.clone(), account_rows).into_proto()?);
         }
 
@@ -175,5 +258,57 @@ where
             next_page_token,
             total_count,
         }))
+    }
+
+    async fn delete_item(
+        &self,
+        request: Request<DeleteItemRequest>,
+    ) -> Result<Response<()>, Status> {
+        let message = request.into_inner();
+        let item_id = Some(message.item_id)
+            .filter(|s| !s.is_empty())
+            .ok_or(invalid_argument!("'item_id' must be specified"))?
+            .parse::<Uuid>()
+            .map_err(|e| invalid_argument!("'item_id' is invalid: {:?}", e))?;
+
+        let store = self.database.begin().await?;
+        let item = store
+            .find_item_by_id(item_id)
+            .await?
+            .ok_or(not_found!("item not found"))?;
+        let accounts = store.list_accounts_for_item(item.item_id).await?;
+        let account_ids = accounts
+            .iter()
+            .map(|account| account.account_id.clone())
+            .collect::<Vec<Uuid>>();
+        store
+            .delete_item_and_accounts(item.item_id, account_ids)
+            .await?;
+        store.commit().await?;
+
+        // Detach bank accounts from stripe customers.
+        let user = self
+            .database
+            .on_demand()
+            .find_user_by_id(item.user_id)
+            .await?
+            .ok_or(internal!("user not found"))?;
+        let customer_id = user
+            .stripe_customer_id
+            .parse()
+            .map_err(|e| internal!("failed to parse stripe customer id: {:?}", e))?;
+        for account in accounts {
+            let source_id = stripe::PaymentSourceId::BankAccount(
+                account
+                    .stripe_bank_account_id
+                    .parse()
+                    .map_err(|e| internal!("failed to parse stripe bank account id: {:?}", e))?,
+            );
+            stripe::Customer::detach_source(&self.stripe, &customer_id, &source_id)
+                .await
+                .map_err(|e| internal!("failed to detach source from stripe customer: {:?}", e))?;
+        }
+
+        Ok(Response::new(()))
     }
 }

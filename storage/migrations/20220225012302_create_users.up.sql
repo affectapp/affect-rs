@@ -4,5 +4,6 @@ CREATE TABLE users (
     update_time TIMESTAMPTZ NOT NULL,
     firebase_uid VARCHAR(255) NOT NULL UNIQUE,
     firebase_email VARCHAR(255) NOT NULL,
+    stripe_customer_id VARCHAR(255) NOT NULL UNIQUE,
     PRIMARY KEY (user_id)
 )

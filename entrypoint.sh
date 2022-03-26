@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Entrypoint for docker container. Not intended to be run outside
 # of docker environment (see Dockerfile).
 

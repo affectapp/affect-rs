@@ -27,6 +27,7 @@ pub enum Error {
 
 impl From<Error> for affect_status::Status {
     fn from(error: Error) -> Self {
+        // TODO: Maybe map sqlx "duplicate entry" errors to "already exists", etc.
         return affect_status::internal!("storage error: {:?}", error);
     }
 }

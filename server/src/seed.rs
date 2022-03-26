@@ -33,12 +33,13 @@ pub async fn insert_nonprofits(
         let new_row = NewNonprofitRow {
             create_time: now,
             update_time: now,
-            change_nonprofit_id: change_nonprofit.id,
+            change_nonprofit_id: Some(change_nonprofit.id),
             icon_url: change_nonprofit.icon_url,
             name: change_nonprofit.name,
             ein: change_nonprofit.ein,
             mission: change_nonprofit.mission,
             category: change_nonprofit.category,
+            affiliate_id: None,
         };
 
         debug!("Seeding nonprofit: {:?}", new_row);

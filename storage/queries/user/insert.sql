@@ -3,7 +3,8 @@ INSERT INTO users (
     create_time,
     update_time,
     firebase_uid,
-    firebase_email
+    firebase_email,
+    stripe_customer_id
   )
-VALUES (DEFAULT, $1, $2, $3, $4)
+VALUES (DEFAULT, $1, $2, $3, $4, $5)
 RETURNING *

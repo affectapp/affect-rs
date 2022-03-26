@@ -3,7 +3,7 @@ use affect_api::affect::{
     list_nonprofits_request::Filter, nonprofit_service_server::NonprofitService,
     ListNonprofitsRequest, *,
 };
-use affect_status::invalid_argument;
+use affect_status::{invalid_argument, not_found};
 use affect_storage::{
     page_token::{PageToken, PageTokenable},
     stores::nonprofit::{NonprofitPageToken, NonprofitStore},
@@ -43,7 +43,7 @@ impl NonprofitService for NonprofitServiceImpl {
             .nonprofit_store
             .find_nonprofit_by_id(nonprofit_id)
             .await?
-            .ok_or(Status::not_found("nonprofit not found"))?;
+            .ok_or(not_found!("nonprofit not found"))?;
 
         Ok(Response::new(nonprofit_row.into_proto()?))
     }

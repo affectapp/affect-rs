@@ -64,6 +64,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         config.plaid.secret_key,
         config.plaid.env.parse()?,
     ));
+    let stripe_client = Arc::new(stripe::Client::new(config.stripe.secret));
 
     // Seed database with data.
     seed::insert_nonprofits(store.clone(), change_client).await?;
@@ -80,9 +81,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(affect_api::FILE_DESCRIPTOR_SET)
         .build()?;
-    let user_service = UserServiceImpl::new(store.clone(), firebase_auth.clone());
+    let user_service =
+        UserServiceImpl::new(store.clone(), firebase_auth.clone(), stripe_client.clone());
     let nonprofit_service = NonprofitServiceImpl::new(store.clone());
-    let item_service = ItemServiceImpl::new(store.clone(), plaid_client.clone());
+    let item_service = ItemServiceImpl::new(
+        database.clone(),
+        plaid_client.clone(),
+        stripe_client.clone(),
+    );
     let cause_service = CauseServiceImpl::new(database.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {

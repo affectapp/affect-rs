@@ -9,6 +9,7 @@ pub struct ServerConfig {
     pub firebase: FirebaseConfig,
     pub change: ChangeConfig,
     pub plaid: PlaidConfig,
+    pub stripe: StripeConfig,
 }
 
 #[derive(Deserialize)]
@@ -37,4 +38,10 @@ pub struct PlaidConfig {
     pub client_id: String,
     pub secret_key: String,
     pub env: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct StripeConfig {
+    pub secret: String,
 }

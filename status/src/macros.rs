@@ -11,6 +11,11 @@ macro_rules! invalid_argument {
 }
 
 #[macro_export]
+macro_rules! not_found {
+    ($($arg:tt)*) => ($crate::status!(not_found, $($arg)*))
+}
+
+#[macro_export]
 macro_rules! internal {
     ($($arg:tt)*) => ($crate::status!(internal, $($arg)*))
 }

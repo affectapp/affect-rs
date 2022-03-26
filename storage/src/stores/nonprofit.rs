@@ -11,24 +11,26 @@ pub struct NonprofitRow {
     pub nonprofit_id: Uuid,
     pub create_time: DateTime<Utc>,
     pub update_time: DateTime<Utc>,
-    pub change_nonprofit_id: String,
+    pub change_nonprofit_id: Option<String>,
     pub icon_url: String,
     pub name: String,
     pub ein: String,
     pub mission: String,
     pub category: String,
+    pub affiliate_id: Option<Uuid>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct NewNonprofitRow {
     pub create_time: DateTime<Utc>,
     pub update_time: DateTime<Utc>,
-    pub change_nonprofit_id: String,
+    pub change_nonprofit_id: Option<String>,
     pub icon_url: String,
     pub name: String,
     pub ein: String,
     pub mission: String,
     pub category: String,
+    pub affiliate_id: Option<Uuid>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -96,18 +98,19 @@ pub trait NonprofitStore: Sync + Send {
 
 #[async_trait]
 impl NonprofitStore for PgOnDemandStore {
-    async fn add_nonprofit(&self, new_profit: NewNonprofitRow) -> Result<NonprofitRow, Error> {
+    async fn add_nonprofit(&self, new_nonprofit: NewNonprofitRow) -> Result<NonprofitRow, Error> {
         Ok(sqlx::query_file_as!(
             NonprofitRow,
             "queries/nonprofit/insert.sql",
-            &new_profit.create_time,
-            &new_profit.update_time,
-            &new_profit.change_nonprofit_id,
-            &new_profit.icon_url,
-            &new_profit.name,
-            &new_profit.ein,
-            &new_profit.mission,
-            &new_profit.category,
+            new_nonprofit.create_time,
+            new_nonprofit.update_time,
+            new_nonprofit.change_nonprofit_id,
+            new_nonprofit.icon_url,
+            new_nonprofit.name,
+            new_nonprofit.ein,
+            new_nonprofit.mission,
+            new_nonprofit.category,
+            new_nonprofit.affiliate_id,
         )
         .fetch_one(&*self.pool)
         .await?)

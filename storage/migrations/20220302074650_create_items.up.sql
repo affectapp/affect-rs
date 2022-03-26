@@ -3,8 +3,8 @@ CREATE TABLE items (
   create_time TIMESTAMPTZ NOT NULL,
   update_time TIMESTAMPTZ NOT NULL,
   user_id uuid NOT NULL,
-  plaid_item_id VARCHAR(255) NOT NULL,
-  plaid_access_token VARCHAR(255) NOT NULL,
+  plaid_item_id VARCHAR(255) NOT NULL UNIQUE,
+  plaid_access_token VARCHAR(255) NOT NULL UNIQUE,
   PRIMARY KEY (item_id),
   CONSTRAINT fk_item_to_user FOREIGN KEY (user_id) REFERENCES users(user_id)
 )

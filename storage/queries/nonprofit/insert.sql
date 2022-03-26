@@ -7,7 +7,8 @@ INSERT INTO nonprofits (
     name,
     ein,
     mission,
-    category
+    category,
+    affiliate_id
   )
-VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8)
+VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *

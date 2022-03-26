@@ -99,7 +99,7 @@ where
             .map_err(|e| invalid_argument!("'page_token' is invalid: {:?}", e))?;
         let user_id = Some(message.user_id)
             .filter(|s| !s.is_empty())
-            .ok_or(Status::invalid_argument("'user_id' must be specified"))?
+            .ok_or(invalid_argument!("'user_id' must be specified"))?
             .parse::<Uuid>()
             .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
 
