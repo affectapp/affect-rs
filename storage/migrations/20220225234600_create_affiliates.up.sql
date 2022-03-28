@@ -1,4 +1,9 @@
-CREATE TYPE business_type AS ENUM ('individual', 'company', 'non_profit', 'government_entity');
+CREATE TYPE business_type AS ENUM (
+  'individual',
+  'company',
+  'nonprofit',
+  'government_entity'
+);
 CREATE TABLE affiliates (
   affiliate_id uuid NOT NULL DEFAULT uuid_generate_v4(),
   create_time TIMESTAMPTZ NOT NULL,

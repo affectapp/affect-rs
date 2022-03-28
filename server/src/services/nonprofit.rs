@@ -3,31 +3,49 @@ use affect_api::affect::{
     list_nonprofits_request::Filter, nonprofit_service_server::NonprofitService,
     ListNonprofitsRequest, *,
 };
-use affect_status::{invalid_argument, not_found};
+use affect_status::{internal, invalid_argument, not_found};
 use affect_storage::{
+    database::{
+        client::DatabaseClient,
+        store::{OnDemandStore, TransactionalStore},
+    },
     page_token::{PageToken, PageTokenable},
-    stores::nonprofit::{NonprofitPageToken, NonprofitStore},
+    stores::{
+        affiliate::AffiliateStore,
+        nonprofit::{NonprofitPageToken, NonprofitStore},
+    },
 };
 use async_trait::async_trait;
 use std::{
     cmp::{max, min},
+    marker::PhantomData,
     sync::Arc,
 };
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-pub struct NonprofitServiceImpl {
-    nonprofit_store: Arc<dyn NonprofitStore>,
+pub struct NonprofitServiceImpl<Db, Store, TStore> {
+    database: Arc<Db>,
+    _marker: PhantomData<(Store, TStore)>,
 }
 
-impl NonprofitServiceImpl {
-    pub fn new(nonprofit_store: Arc<dyn NonprofitStore>) -> Self {
-        Self { nonprofit_store }
+impl<Db, Store, TStore> NonprofitServiceImpl<Db, Store, TStore> {
+    pub fn new(database: Arc<Db>) -> Self {
+        Self {
+            database,
+            _marker: PhantomData,
+        }
     }
 }
 
 #[async_trait]
-impl NonprofitService for NonprofitServiceImpl {
+impl<Db, Store, TStore> NonprofitService for NonprofitServiceImpl<Db, Store, TStore>
+where
+    Db: DatabaseClient<Store, TStore> + 'static,
+    Store: NonprofitStore + AffiliateStore + OnDemandStore + 'static,
+    TStore: TransactionalStore + 'static,
+    Self: Sync + Send,
+{
     async fn get_nonprofit(
         &self,
         request: Request<GetNonprofitRequest>,
@@ -40,12 +58,25 @@ impl NonprofitService for NonprofitServiceImpl {
             .map_err(|e| invalid_argument!("'nonprofit_id' is invalid: {:?}", e))?;
 
         let nonprofit_row = self
-            .nonprofit_store
+            .database
+            .on_demand()
             .find_nonprofit_by_id(nonprofit_id)
             .await?
             .ok_or(not_found!("nonprofit not found"))?;
+        let affiliate_row = match nonprofit_row.affiliate_id {
+            Some(affiliate_id) => Some(
+                self.database
+                    .on_demand()
+                    .find_affiliate_by_id(affiliate_id)
+                    .await?
+                    .ok_or(internal!("affiliate not found"))?,
+            ),
+            None => None,
+        };
 
-        Ok(Response::new(nonprofit_row.into_proto()?))
+        let nonprofit_and_affiliate = (nonprofit_row, affiliate_row);
+
+        Ok(Response::new(nonprofit_and_affiliate.into_proto()?))
     }
 
     async fn list_nonprofits(
@@ -61,12 +92,14 @@ impl NonprofitService for NonprofitServiceImpl {
 
         let (rows_plus_one, total_count) = match message.filter {
             Some(Filter::FilterBySearch(filter_by_search)) => {
-                self.nonprofit_store
+                self.database
+                    .on_demand()
                     .list_and_count_nonprofits_by_search(limit, page_token, &filter_by_search.query)
                     .await?
             }
             None => {
-                self.nonprofit_store
+                self.database
+                    .on_demand()
                     .list_and_count_nonprofits(limit, page_token)
                     .await?
             }
@@ -76,10 +109,20 @@ impl NonprofitService for NonprofitServiceImpl {
             rows_plus_one.split_at(min(rows_plus_one.len(), page_size as usize));
 
         // Map rows to protos and serialize page token.
-        let nonprofits = page_rows
-            .iter()
-            .map(|row| Ok(row.clone().into_proto()?))
-            .collect::<Result<Vec<Nonprofit>, Status>>()?;
+        let mut nonprofits: Vec<Nonprofit> = Vec::new();
+        for row in page_rows {
+            let affiliate_row = match row.affiliate_id {
+                Some(affiliate_id) => Some(
+                    self.database
+                        .on_demand()
+                        .find_affiliate_by_id(affiliate_id)
+                        .await?
+                        .ok_or(internal!("affiliate not found"))?,
+                ),
+                None => None,
+            };
+            nonprofits.push((row.clone(), affiliate_row).into_proto()?);
+        }
 
         // Next page token or empty string.
         let next_page_token = next_page_rows

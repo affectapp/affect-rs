@@ -18,7 +18,6 @@ impl ProtoFrom<Uuid> for String {
     }
 }
 
-/// google.protobuf.Timestamp -> DateTime<Utc>
 impl FromProto<Timestamp> for DateTime<Utc> {
     fn from_proto(proto: Timestamp) -> Result<Self, Status> {
         Ok(Utc.timestamp(
@@ -31,7 +30,6 @@ impl FromProto<Timestamp> for DateTime<Utc> {
     }
 }
 
-/// DateTime<Utc> -> google.protobuf.Timestamp
 impl ProtoFrom<DateTime<Utc>> for Timestamp {
     fn proto_from(value: DateTime<Utc>) -> Result<Self, Status> {
         Ok(Timestamp {

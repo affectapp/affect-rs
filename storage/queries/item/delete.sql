@@ -1,1 +1,2 @@
-DELETE FROM items WHERE item_id = $1
+DELETE FROM items
+WHERE item_id = $1

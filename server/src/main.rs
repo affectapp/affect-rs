@@ -1,6 +1,7 @@
 use affect_api::affect::{
-    cause_service_server::CauseServiceServer, item_service_server::ItemServiceServer,
-    nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
+    affiliate_service_server::AffiliateServiceServer, cause_service_server::CauseServiceServer,
+    item_service_server::ItemServiceServer, nonprofit_service_server::NonprofitServiceServer,
+    user_service_server::UserServiceServer,
 };
 use affect_server::{
     change::client::{ChangeClient, ChangeCredentials},
@@ -9,8 +10,8 @@ use affect_server::{
     interceptors::authn::AuthnInterceptor,
     seed,
     services::{
-        cause::CauseServiceImpl, item::ItemServiceImpl, nonprofit::NonprofitServiceImpl,
-        user::UserServiceImpl,
+        affiliate::AffiliateServiceImpl, cause::CauseServiceImpl, item::ItemServiceImpl,
+        nonprofit::NonprofitServiceImpl, user::UserServiceImpl,
     },
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
@@ -83,13 +84,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
     let user_service =
         UserServiceImpl::new(store.clone(), firebase_auth.clone(), stripe_client.clone());
-    let nonprofit_service = NonprofitServiceImpl::new(store.clone());
+    let nonprofit_service = NonprofitServiceImpl::new(database.clone());
     let item_service = ItemServiceImpl::new(
         database.clone(),
         plaid_client.clone(),
         stripe_client.clone(),
     );
     let cause_service = CauseServiceImpl::new(database.clone());
+    let affiliate_service = AffiliateServiceImpl::new(database.clone(), stripe_client.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {
         (None, Some(port_env_var)) => std::env::var(&port_env_var)?.parse()?,
@@ -105,6 +107,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(NonprofitServiceServer::new(nonprofit_service))
         .add_service(ItemServiceServer::new(item_service))
         .add_service(CauseServiceServer::new(cause_service))
+        .add_service(AffiliateServiceServer::new(affiliate_service))
         .serve(addr)
         .await?;
 

@@ -1,3 +1,4 @@
+pub mod affiliate;
 pub mod cause;
 pub mod item;
 pub mod nonprofit;

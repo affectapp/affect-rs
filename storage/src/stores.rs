@@ -1,4 +1,5 @@
 pub mod account;
+pub mod affiliate;
 pub mod cause;
 pub mod cause_and_recipient;
 pub mod cause_recipient;

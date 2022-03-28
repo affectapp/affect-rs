@@ -1,1 +1,2 @@
-DELETE FROM accounts WHERE account_id = $1
+DELETE FROM accounts
+WHERE account_id = $1

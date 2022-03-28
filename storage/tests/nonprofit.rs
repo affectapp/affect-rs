@@ -15,12 +15,13 @@ async fn create_nonprofit() -> Result<(), anyhow::Error> {
         nonprofit_id: Uuid::new_v4(),
         create_time: Utc.timestamp(500, 0),
         update_time: Utc.timestamp(1000, 0),
-        change_nonprofit_id: "test_nonprofit_id".to_string(),
+        change_nonprofit_id: Some("test_nonprofit_id".to_string()),
         icon_url: "test_icon_url".to_string(),
         name: "name".to_string(),
         ein: "ein".to_string(),
         mission: "mission".to_string(),
         category: "category".to_string(),
+        affiliate_id: None,
     };
 
     // Insert nonprofit.
@@ -34,6 +35,7 @@ async fn create_nonprofit() -> Result<(), anyhow::Error> {
             ein: expected_nonprofit.ein.clone(),
             mission: expected_nonprofit.mission.clone(),
             category: expected_nonprofit.category.clone(),
+            affiliate_id: None,
         })
         .await?;
 

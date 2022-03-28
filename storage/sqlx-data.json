@@ -808,8 +808,8 @@
       ]
     }
   },
-  "9a09501f4c19ec5f9a62ae9b2c41a987ed84edb308730a1ec6fb65f51e1a7874": {
-    "query": "DELETE FROM items WHERE item_id = $1",
+  "a012d50c6a90fcde64f9320632207097a5350c82e3264afb42cb3454a2cbb5c3": {
+    "query": "DELETE FROM accounts\r\nWHERE account_id = $1",
     "describe": {
       "columns": [],
       "parameters": {
@@ -818,6 +818,74 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "a0b0f648f1c0433d018446bb8a94a0c0a8ccf74c905c49f6faa171ef6e1f7463": {
+    "query": "SELECT affiliate_id,\n  create_time,\n  update_time,\n  stripe_account_id,\n  company_name,\n  contact_email,\n  business_type as \"business_type: _\"\nFROM affiliates\nWHERE affiliate_id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "affiliate_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "stripe_account_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "company_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "contact_email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "business_type: _",
+          "type_info": {
+            "Custom": {
+              "name": "business_type",
+              "kind": {
+                "Enum": [
+                  "individual",
+                  "company",
+                  "nonprofit",
+                  "government_entity"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     }
   },
   "a18412550fa8c3b9ec261c05d6402f7a3b128c4b0b2401d2ad25f7be05d29bee": {
@@ -1071,18 +1139,6 @@
       ]
     }
   },
-  "b7413789ebe0a3950575ec7379d2ff6b5d179b28b562d92368bf03da3f3c77db": {
-    "query": "DELETE FROM accounts WHERE account_id = $1",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": []
-    }
-  },
   "c004a52363e4a8a7b333381f9cb085602e75f43d3fb68a97ea45b755f7dd737e": {
     "query": "SELECT *\nFROM cause_recipients\nWHERE cause_id = $1\nORDER BY create_time ASC,\n  nonprofit_id ASC",
     "describe": {
@@ -1114,6 +1170,91 @@
         ]
       },
       "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "c7a36a0a42215a1819e854549d27866ee69875c9f1a607c9dcb8b7eb7c53a737": {
+    "query": "INSERT INTO affiliates (\r\n                affiliate_id,\r\n                create_time,\r\n                update_time,\r\n                stripe_account_id,\r\n                company_name,\r\n                contact_email,\r\n                business_type\r\n        )\r\nVALUES (DEFAULT, $1, $2, $3, $4, $5, $6)\r\nRETURNING affiliate_id,\r\n        create_time,\r\n        update_time,\r\n        stripe_account_id,\r\n        company_name,\r\n        contact_email,\r\n        business_type as \"business_type: _\"",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "affiliate_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "stripe_account_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "company_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "contact_email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "business_type: _",
+          "type_info": {
+            "Custom": {
+              "name": "business_type",
+              "kind": {
+                "Enum": [
+                  "individual",
+                  "company",
+                  "nonprofit",
+                  "government_entity"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Timestamptz",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          {
+            "Custom": {
+              "name": "business_type",
+              "kind": {
+                "Enum": [
+                  "individual",
+                  "company",
+                  "nonprofit",
+                  "government_entity"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
         false,
         false,
         false,
@@ -1268,6 +1409,18 @@
         false,
         false
       ]
+    }
+  },
+  "f95b3da26d05ce994139afbec30110426aba248d2297a180d586a0d159e65fdb": {
+    "query": "DELETE FROM items\r\nWHERE item_id = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
     }
   }
 }
