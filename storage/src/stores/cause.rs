@@ -6,10 +6,11 @@ use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgExecutor};
+use sqlx::postgres::PgTypeInfo;
+use sqlx::{FromRow, PgExecutor, Postgres};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromRow, PartialEq)]
+#[derive(Clone, Debug, FromRow)]
 pub struct CauseRow {
     pub cause_id: Uuid,
     pub create_time: DateTime<Utc>,
@@ -18,7 +19,17 @@ pub struct CauseRow {
     pub name: String,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, FromRow)]
+pub struct CauseFullRow {
+    pub cause_id: Uuid,
+    pub create_time: DateTime<Utc>,
+    pub update_time: DateTime<Utc>,
+    pub user_id: Uuid,
+    pub name: String,
+    pub recipients: CauseRecipientRowVec,
+}
+
+#[derive(Clone, Debug)]
 pub struct NewCauseRow {
     pub create_time: DateTime<Utc>,
     pub update_time: DateTime<Utc>,
@@ -26,7 +37,7 @@ pub struct NewCauseRow {
     pub name: String,
 }
 
-#[derive(Clone, Debug, FromRow, PartialEq)]
+#[derive(Clone, Debug, FromRow, sqlx::Type)]
 pub struct CauseRecipientRow {
     pub cause_id: Uuid,
     pub nonprofit_id: Uuid,
@@ -34,7 +45,7 @@ pub struct CauseRecipientRow {
     pub update_time: DateTime<Utc>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct NewCauseRecipientRow {
     pub cause_id: Uuid,
     pub nonprofit_id: Uuid,
@@ -42,15 +53,38 @@ pub struct NewCauseRecipientRow {
     pub update_time: DateTime<Utc>,
 }
 
+#[derive(Clone, Debug, sqlx::Decode)]
+pub struct CauseRecipientRowVec(Vec<CauseRecipientRow>);
+
+impl CauseRecipientRowVec {
+    pub fn inner(self) -> Vec<CauseRecipientRow> {
+        self.0
+    }
+}
+
+impl sqlx::Type<Postgres> for CauseRecipientRowVec {
+    fn type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("_cause_recipients")
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct CausePageToken {
     #[serde(with = "ts_nanoseconds")]
     pub create_time: DateTime<Utc>,
-
     pub cause_id: Uuid,
 }
 
 impl PageTokenable<CausePageToken> for CauseRow {
+    fn page_token(&self) -> CausePageToken {
+        CausePageToken {
+            create_time: self.create_time.clone(),
+            cause_id: self.cause_id.clone(),
+        }
+    }
+}
+
+impl PageTokenable<CausePageToken> for CauseFullRow {
     fn page_token(&self) -> CausePageToken {
         CausePageToken {
             create_time: self.create_time.clone(),
@@ -68,7 +102,7 @@ pub trait CauseStore: Send + Sync {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<Vec<CauseRow>, Error>;
+    ) -> Result<Vec<CauseFullRow>, Error>;
 
     async fn count_causes_for_user(&self, user_id: Uuid) -> Result<i64, Error>;
 
@@ -77,7 +111,7 @@ pub trait CauseStore: Send + Sync {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<(Vec<CauseRow>, i64), Error> {
+    ) -> Result<(Vec<CauseFullRow>, i64), Error> {
         let list_fut = self.list_causes_for_user(page_size, page_token, user_id);
         let count_fut = self.count_causes_for_user(user_id);
         futures::try_join!(list_fut, count_fut)
@@ -105,7 +139,7 @@ impl CauseStore for PgOnDemandStore {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<Vec<CauseRow>, Error> {
+    ) -> Result<Vec<CauseFullRow>, Error> {
         Ok(list_causes_for_user(&*self.pool, page_size, page_token, user_id).await?)
     }
 
@@ -140,7 +174,7 @@ impl<'a> CauseStore for PgTransactionalStore<'a> {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<Vec<CauseRow>, Error> {
+    ) -> Result<Vec<CauseFullRow>, Error> {
         let mut lock = self.txn.lock().await;
         Ok(list_causes_for_user(&mut *lock, page_size, page_token, user_id).await?)
     }
@@ -235,7 +269,7 @@ async fn list_causes_for_user<'a, E>(
     page_size: i64,
     page_token: Option<CausePageToken>,
     user_id: Uuid,
-) -> Result<Vec<CauseRow>, Error>
+) -> Result<Vec<CauseFullRow>, Error>
 where
     E: PgExecutor<'a>,
 {
@@ -243,7 +277,7 @@ where
         Some(page_token) => {
             // Query by page token:
             sqlx::query_file_as!(
-                CauseRow,
+                CauseFullRow,
                 "queries/cause/list_at_page_for_user.sql",
                 page_token.create_time,
                 page_token.cause_id,
@@ -256,7 +290,7 @@ where
         None => {
             // Query first page:
             sqlx::query_file_as!(
-                CauseRow,
+                CauseFullRow,
                 "queries/cause/list_for_user.sql",
                 page_size,
                 &user_id

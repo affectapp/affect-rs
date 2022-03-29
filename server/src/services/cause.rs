@@ -101,12 +101,7 @@ where
         // Map rows to protos and serialize page token.
         let mut causes = Vec::new();
         for row in page_rows {
-            let cause_recipient_rows = self
-                .database
-                .on_demand()
-                .list_cause_recipients_for_cause(row.cause_id)
-                .await?;
-            causes.push((row.clone(), cause_recipient_rows).into_proto()?);
+            causes.push(row.clone().into_proto()?);
         }
 
         // Next page token or empty string.
