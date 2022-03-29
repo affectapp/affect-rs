@@ -8,7 +8,7 @@ use affect_storage::{
         client::DatabaseClient,
         store::{OnDemandStore, TransactionalStore},
     },
-    stores::{cause::*, cause_recipient::*},
+    stores::cause::*,
 };
 use async_trait::async_trait;
 use chrono::Utc;
@@ -111,10 +111,7 @@ mock! {
         ) -> Result<Vec<CauseRow>, affect_storage::Error>;
 
         async fn count_causes_for_user(&self, user_id: Uuid) -> Result<i64, affect_storage::Error>;
-    }
 
-    #[async_trait]
-    impl CauseRecipientStore for Store {
         async fn add_cause_recipient(
             &self,
             new_row: NewCauseRecipientRow,

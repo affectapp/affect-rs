@@ -10,11 +10,7 @@ use affect_storage::{
         store::{OnDemandStore, TransactionalStore},
     },
     page_token::{PageToken, PageTokenable},
-    stores::{
-        cause::{CausePageToken, CauseStore},
-        cause_and_recipient::CauseAndRecipientStore,
-        cause_recipient::CauseRecipientStore,
-    },
+    stores::cause::{CauseAndRecipientStore, CausePageToken, CauseStore},
 };
 use async_trait::async_trait;
 use std::{
@@ -25,23 +21,13 @@ use std::{
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-pub struct CauseServiceImpl<Client, Store, TStore>
-where
-    Client: DatabaseClient<Store, TStore>,
-    Store: CauseStore + CauseRecipientStore + OnDemandStore,
-    TStore: CauseStore + CauseRecipientStore + TransactionalStore,
-{
-    database: Arc<Client>,
+pub struct CauseServiceImpl<Db, Store, TStore> {
+    database: Arc<Db>,
     _marker: PhantomData<fn() -> (Store, TStore)>,
 }
 
-impl<Client, Store, TStore> CauseServiceImpl<Client, Store, TStore>
-where
-    Client: DatabaseClient<Store, TStore>,
-    Store: CauseStore + CauseRecipientStore + OnDemandStore,
-    TStore: CauseStore + CauseRecipientStore + TransactionalStore,
-{
-    pub fn new(client: Arc<Client>) -> Self {
+impl<Db, Store, TStore> CauseServiceImpl<Db, Store, TStore> {
+    pub fn new(client: Arc<Db>) -> Self {
         Self {
             database: client,
             _marker: PhantomData,
@@ -50,11 +36,11 @@ where
 }
 
 #[async_trait]
-impl<Client, Store, TStore> CauseService for CauseServiceImpl<Client, Store, TStore>
+impl<Db, Store, TStore> CauseService for CauseServiceImpl<Db, Store, TStore>
 where
-    Client: DatabaseClient<Store, TStore> + 'static,
-    Store: CauseStore + CauseRecipientStore + OnDemandStore + 'static,
-    TStore: CauseStore + CauseRecipientStore + TransactionalStore + 'static,
+    Db: DatabaseClient<Store, TStore> + 'static,
+    Store: CauseStore + OnDemandStore + 'static,
+    TStore: CauseStore + TransactionalStore + 'static,
 {
     async fn create_cause(
         &self,

@@ -1,5 +1,43 @@
 {
   "db": "PostgreSQL",
+  "06ba77dc21faeb7af67b6b5294aa82d301f7770f47fb486c3d454ef528c47ed6": {
+    "query": "SELECT *\nFROM affiliate_managers\nWHERE affiliate_id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "affiliate_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "06e1752bc073e3d2579a0e8b53de34784262448a757667a91fe886a9f0d25f82": {
     "query": "INSERT INTO items (\n    item_id,\n    create_time,\n    update_time,\n    user_id,\n    plaid_item_id,\n    plaid_access_token\n  )\nVALUES (DEFAULT, $1, $2, $3, $4, $5)\nRETURNING *",
     "describe": {
@@ -512,6 +550,47 @@
         false,
         false,
         true
+      ]
+    }
+  },
+  "5fea2d3c956b68fe7692a875e2ebe20085cb357f98632c2da043c38b430c69a5": {
+    "query": "INSERT INTO affiliate_managers (\n    affiliate_id,\n    user_id,\n    create_time,\n    update_time\n  )\nVALUES ($1, $2, $3, $4)\nRETURNING *",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "affiliate_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Uuid",
+          "Timestamptz",
+          "Timestamptz"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
       ]
     }
   },
@@ -1404,6 +1483,44 @@
       "nullable": [
         false,
         false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "f0fc95b7cc3973e171351ad5a836032a0c0d722b1af6b7e494ea16ec9afa58d8": {
+    "query": "SELECT *\nFROM affiliate_managers\nWHERE user_id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "affiliate_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 2,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
         false,
         false,
         false,

@@ -7,13 +7,14 @@ use affect_status::{internal, invalid_argument, not_found, Status};
 use affect_storage::{
     database::client::DatabaseClient,
     database::store::{OnDemandStore, TransactionalStore},
-    stores::affiliate::{AffiliateStore, NewAffiliateRow},
+    stores::affiliate::{AffiliateStore, NewAffiliateManagerRow, NewAffiliateRow},
 };
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tonic::{Request, Response};
+use uuid::Uuid;
 
 use affect_storage::stores::affiliate::BusinessType as StoreBusinessType;
 
@@ -38,7 +39,7 @@ impl<Client, Store, TStore> AffiliateService for AffiliateServiceImpl<Client, St
 where
     Client: DatabaseClient<Store, TStore> + 'static,
     Store: AffiliateStore + OnDemandStore + 'static,
-    TStore: TransactionalStore + 'static,
+    TStore: AffiliateStore + TransactionalStore + 'static,
     Self: Sync + Send,
 {
     async fn create_affiliate(
@@ -46,6 +47,12 @@ where
         request: Request<CreateAffiliateRequest>,
     ) -> Result<Response<Affiliate>, Status> {
         let message = request.into_inner();
+
+        let user_id = Some(message.user_id.clone())
+            .filter(|s| !s.is_empty())
+            .ok_or(invalid_argument!("'user_id' must be specified"))?
+            .parse::<Uuid>()
+            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
 
         let company_name = Some(message.company_name.to_string())
             .filter(|s| !s.is_empty())
@@ -86,9 +93,10 @@ where
             .map_err(|e| internal!("failed to create stripe account: {:?}", e))?;
 
         let now = Utc::now();
-        let affiliate_row = self
-            .database
-            .on_demand()
+
+        let txn = self.database.begin().await?;
+
+        let affiliate_row = txn
             .add_affiliate(NewAffiliateRow {
                 create_time: now,
                 update_time: now,
@@ -114,8 +122,20 @@ where
                 },
             })
             .await?;
+        txn.add_affiliate_manager(NewAffiliateManagerRow {
+            affiliate_id: affiliate_row.affiliate_id.clone(),
+            user_id,
+            create_time: now,
+            update_time: now,
+        })
+        .await?;
+        let affiliate_full_row = txn
+            .find_affiliate_by_id(affiliate_row.affiliate_id.clone())
+            .await?
+            .ok_or(internal!("expected to find created affiliate"))?;
+        txn.commit().await?;
 
-        Ok(Response::new(affiliate_row.into_proto()?))
+        Ok(Response::new(affiliate_full_row.into_proto()?))
     }
 
     async fn generate_affiliate_link(

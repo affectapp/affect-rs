@@ -1,10 +1,10 @@
 use crate::protobuf::{from::ProtoFrom, into::IntoProto};
 use affect_api::affect::Nonprofit;
-use affect_storage::stores::{affiliate::AffiliateRow, nonprofit::NonprofitRow};
+use affect_storage::stores::{affiliate::AffiliateFullRow, nonprofit::NonprofitRow};
 use tonic::Status;
 
-impl ProtoFrom<(NonprofitRow, Option<AffiliateRow>)> for Nonprofit {
-    fn proto_from(value: (NonprofitRow, Option<AffiliateRow>)) -> Result<Self, Status> {
+impl ProtoFrom<(NonprofitRow, Option<AffiliateFullRow>)> for Nonprofit {
+    fn proto_from(value: (NonprofitRow, Option<AffiliateFullRow>)) -> Result<Self, Status> {
         let nonprofit_row = value.0;
         let affiliate_row = value.1;
 
