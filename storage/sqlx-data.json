@@ -381,6 +381,172 @@
       ]
     }
   },
+  "34a46ebfa3f8faf20cfbb18ef5bbd4da69596c87bcdb06a5df2dc14fc6430986": {
+    "query": "SELECT causes.*,\n  COALESCE(ARRAY_AGG(cause_recipients), '{}') AS \"recipients!: _\"\nFROM causes\n  JOIN cause_recipients USING (cause_id)\nWHERE (causes.create_time, causes.cause_id) >= ($1, $2)\n  AND causes.user_id = $3\nGROUP BY causes.cause_id\nORDER BY causes.create_time ASC,\n  causes.cause_id ASC\nLIMIT $4",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "cause_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "recipients!: _",
+          "type_info": {
+            "Custom": {
+              "name": "_cause_recipients",
+              "kind": {
+                "Array": {
+                  "Custom": {
+                    "name": "cause_recipients",
+                    "kind": {
+                      "Composite": [
+                        [
+                          "cause_id",
+                          "Uuid"
+                        ],
+                        [
+                          "nonprofit_id",
+                          "Uuid"
+                        ],
+                        [
+                          "create_time",
+                          "Timestamptz"
+                        ],
+                        [
+                          "update_time",
+                          "Timestamptz"
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Uuid",
+          "Uuid",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        null
+      ]
+    }
+  },
+  "38628932f9f031086ee182bdc4d9d7207444478d951ba7be0a5fa370ac9f7659": {
+    "query": "SELECT causes.*,\n  COALESCE(ARRAY_AGG(cause_recipients), '{}') AS \"recipients!: _\"\nFROM causes\n  JOIN cause_recipients USING (cause_id)\nWHERE user_id = $2\nGROUP BY causes.cause_id\nORDER BY causes.create_time ASC,\n  causes.cause_id ASC\nLIMIT $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "cause_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 4,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "recipients!: _",
+          "type_info": {
+            "Custom": {
+              "name": "_cause_recipients",
+              "kind": {
+                "Array": {
+                  "Custom": {
+                    "name": "cause_recipients",
+                    "kind": {
+                      "Composite": [
+                        [
+                          "cause_id",
+                          "Uuid"
+                        ],
+                        [
+                          "nonprofit_id",
+                          "Uuid"
+                        ],
+                        [
+                          "create_time",
+                          "Timestamptz"
+                        ],
+                        [
+                          "update_time",
+                          "Timestamptz"
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        null
+      ]
+    }
+  },
   "4b194bbdca7f56c10caf38157225ad836411cbaa4c3cf84e2012debf8bbc5800": {
     "query": "SELECT *\nFROM items\nWHERE item_id = $1",
     "describe": {
@@ -1024,53 +1190,6 @@
       ]
     }
   },
-  "a4502e49ad1ba29d45bdda1d14dbd893d88f582289120b7dc30b88a2997dd2c8": {
-    "query": "SELECT *\nFROM causes\nWHERE (create_time, cause_id) >= ($1, $2)\n  AND user_id = $3\nORDER BY create_time ASC,\n  cause_id ASC\nLIMIT $4",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "cause_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "name",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Timestamptz",
-          "Uuid",
-          "Uuid",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "a908a6733af92d2efa31c17f3514134dc75a0329fb303a9f9e34ffbe7c52c11c": {
     "query": "INSERT INTO cause_recipients (\n    cause_id,\n    nonprofit_id,\n    create_time,\n    update_time\n  )\nVALUES ($1, $2, $3, $4)\nRETURNING *",
     "describe": {
@@ -1424,51 +1543,6 @@
       },
       "nullable": [
         false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "d89c5f10ddb49999fba38d5b5e3289a9ca9eeba37270c0c63cbdbb847665265a": {
-    "query": "SELECT *\nFROM causes\nWHERE user_id = $2\nORDER BY create_time ASC,\n  cause_id ASC\nLIMIT $1",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "cause_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "name",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8",
-          "Uuid"
-        ]
-      },
-      "nullable": [
         false,
         false,
         false,
