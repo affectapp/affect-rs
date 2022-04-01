@@ -276,111 +276,6 @@
       ]
     }
   },
-  "31a94f48a7f2b41d2d59d4c61aaf740f0d1848e2853ce041a2ebc0608fd42305": {
-    "query": "SELECT affiliate_id,\n  affiliates.create_time,\n  affiliates.update_time,\n  stripe_account_id,\n  company_name,\n  contact_email,\n  business_type as \"business_type: _\",\n  COALESCE(ARRAY_AGG(affiliate_managers), '{}') AS \"affiliate_managers!: _\"\nFROM affiliates\n  JOIN affiliate_managers USING (affiliate_id)\nWHERE affiliate_id = $1\nGROUP BY affiliate_id",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "stripe_account_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "company_name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "contact_email",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "business_type: _",
-          "type_info": {
-            "Custom": {
-              "name": "business_type",
-              "kind": {
-                "Enum": [
-                  "individual",
-                  "company",
-                  "nonprofit",
-                  "government_entity"
-                ]
-              }
-            }
-          }
-        },
-        {
-          "ordinal": 7,
-          "name": "affiliate_managers!: _",
-          "type_info": {
-            "Custom": {
-              "name": "_affiliate_managers",
-              "kind": {
-                "Array": {
-                  "Custom": {
-                    "name": "affiliate_managers",
-                    "kind": {
-                      "Composite": [
-                        [
-                          "affiliate_id",
-                          "Uuid"
-                        ],
-                        [
-                          "user_id",
-                          "Uuid"
-                        ],
-                        [
-                          "create_time",
-                          "Timestamptz"
-                        ],
-                        [
-                          "update_time",
-                          "Timestamptz"
-                        ]
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        null
-      ]
-    }
-  },
   "34a46ebfa3f8faf20cfbb18ef5bbd4da69596c87bcdb06a5df2dc14fc6430986": {
     "query": "SELECT causes.*,\n  COALESCE(ARRAY_AGG(cause_recipients), '{}') AS \"recipients!: _\"\nFROM causes\n  JOIN cause_recipients USING (cause_id)\nWHERE (causes.create_time, causes.cause_id) >= ($1, $2)\n  AND causes.user_id = $3\nGROUP BY causes.cause_id\nORDER BY causes.create_time ASC,\n  causes.cause_id ASC\nLIMIT $4",
     "describe": {
@@ -594,6 +489,117 @@
         false,
         false,
         false
+      ]
+    }
+  },
+  "4fc04938430cd66139ed4d6994ca366aede15ca58fec3022651b45e552d407f8": {
+    "query": "SELECT affiliate_id,\n  affiliates.create_time,\n  affiliates.update_time,\n  stripe_account_id,\n  company_name,\n  contact_email,\n  business_type as \"business_type: _\",\n  asserted_nonprofit_id,\n  COALESCE(ARRAY_AGG(affiliate_managers), '{}') AS \"affiliate_managers!: _\"\nFROM affiliates\n  JOIN affiliate_managers USING (affiliate_id)\nWHERE affiliate_id = $1\nGROUP BY affiliate_id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "affiliate_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "stripe_account_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "company_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "contact_email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "business_type: _",
+          "type_info": {
+            "Custom": {
+              "name": "business_type",
+              "kind": {
+                "Enum": [
+                  "individual",
+                  "company",
+                  "nonprofit",
+                  "government_entity"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 7,
+          "name": "asserted_nonprofit_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 8,
+          "name": "affiliate_managers!: _",
+          "type_info": {
+            "Custom": {
+              "name": "_affiliate_managers",
+              "kind": {
+                "Array": {
+                  "Custom": {
+                    "name": "affiliate_managers",
+                    "kind": {
+                      "Composite": [
+                        [
+                          "affiliate_id",
+                          "Uuid"
+                        ],
+                        [
+                          "user_id",
+                          "Uuid"
+                        ],
+                        [
+                          "create_time",
+                          "Timestamptz"
+                        ],
+                        [
+                          "update_time",
+                          "Timestamptz"
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        null
       ]
     }
   },
@@ -904,6 +910,98 @@
         ]
       },
       "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "6370176289b5f44db3e5b31b970b71de5b26e1392db11675271fdce3706a85ab": {
+    "query": "INSERT INTO affiliates (\r\n                affiliate_id,\r\n                create_time,\r\n                update_time,\r\n                stripe_account_id,\r\n                company_name,\r\n                contact_email,\r\n                business_type,\r\n                asserted_nonprofit_id\r\n        )\r\nVALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7)\r\nRETURNING affiliate_id,\r\n        create_time,\r\n        update_time,\r\n        stripe_account_id,\r\n        company_name,\r\n        contact_email,\r\n        business_type as \"business_type: _\",\r\n        asserted_nonprofit_id",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "affiliate_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "stripe_account_id",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "company_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "contact_email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 6,
+          "name": "business_type: _",
+          "type_info": {
+            "Custom": {
+              "name": "business_type",
+              "kind": {
+                "Enum": [
+                  "individual",
+                  "company",
+                  "nonprofit",
+                  "government_entity"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 7,
+          "name": "asserted_nonprofit_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Timestamptz",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          {
+            "Custom": {
+              "name": "business_type",
+              "kind": {
+                "Enum": [
+                  "individual",
+                  "company",
+                  "nonprofit",
+                  "government_entity"
+                ]
+              }
+            }
+          },
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
         false,
         false,
         false,
@@ -1405,91 +1503,6 @@
         ]
       },
       "nullable": [
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
-  "c7a36a0a42215a1819e854549d27866ee69875c9f1a607c9dcb8b7eb7c53a737": {
-    "query": "INSERT INTO affiliates (\r\n                affiliate_id,\r\n                create_time,\r\n                update_time,\r\n                stripe_account_id,\r\n                company_name,\r\n                contact_email,\r\n                business_type\r\n        )\r\nVALUES (DEFAULT, $1, $2, $3, $4, $5, $6)\r\nRETURNING affiliate_id,\r\n        create_time,\r\n        update_time,\r\n        stripe_account_id,\r\n        company_name,\r\n        contact_email,\r\n        business_type as \"business_type: _\"",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "stripe_account_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "company_name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "contact_email",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "business_type: _",
-          "type_info": {
-            "Custom": {
-              "name": "business_type",
-              "kind": {
-                "Enum": [
-                  "individual",
-                  "company",
-                  "nonprofit",
-                  "government_entity"
-                ]
-              }
-            }
-          }
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Timestamptz",
-          "Timestamptz",
-          "Varchar",
-          "Varchar",
-          "Varchar",
-          {
-            "Custom": {
-              "name": "business_type",
-              "kind": {
-                "Enum": [
-                  "individual",
-                  "company",
-                  "nonprofit",
-                  "government_entity"
-                ]
-              }
-            }
-          }
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
         false,
         false,
         false,

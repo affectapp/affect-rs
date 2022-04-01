@@ -13,6 +13,7 @@ pub struct AffiliateRow {
     pub company_name: String,
     pub contact_email: String,
     pub business_type: BusinessType,
+    pub asserted_nonprofit_id: Uuid,
 }
 
 #[derive(Clone, Debug, FromRow)]
@@ -24,6 +25,7 @@ pub struct AffiliateFullRow {
     pub company_name: String,
     pub contact_email: String,
     pub business_type: BusinessType,
+    pub asserted_nonprofit_id: Uuid,
     pub affiliate_managers: AffiliateManagerRowVec,
 }
 
@@ -35,6 +37,7 @@ pub struct NewAffiliateRow {
     pub company_name: String,
     pub contact_email: String,
     pub business_type: BusinessType,
+    pub asserted_nonprofit_id: Uuid,
 }
 
 #[derive(Clone, Debug, FromRow, sqlx::Type)]
@@ -190,6 +193,7 @@ where
         new_row.company_name,
         new_row.contact_email,
         new_row.business_type as BusinessType,
+        new_row.asserted_nonprofit_id,
     )
     .fetch_one(executor)
     .await?)

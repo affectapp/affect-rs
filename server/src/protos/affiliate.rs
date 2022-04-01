@@ -27,6 +27,7 @@ impl ProtoFrom<AffiliateFullRow> for Affiliate {
                     };
                 })
                 .collect(),
+            asserted_nonprofit_id: affiliate_row.asserted_nonprofit_id.into_proto()?,
         })
     }
 }

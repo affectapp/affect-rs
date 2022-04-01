@@ -12,5 +12,6 @@ CREATE TABLE affiliates (
   company_name VARCHAR(255) NOT NULL,
   contact_email VARCHAR(255) NOT NULL,
   business_type business_type NOT NULL,
+  asserted_nonprofit_id uuid NOT NULL,
   PRIMARY KEY (affiliate_id)
 )

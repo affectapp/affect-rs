@@ -8,7 +8,7 @@ CREATE TABLE nonprofits (
   ein VARCHAR(255) NOT NULL,
   mission TEXT NOT NULL,
   category VARCHAR(255) NOT NULL,
-  affiliate_id uuid,
+  affiliate_id uuid UNIQUE,
   PRIMARY KEY (nonprofit_id),
   CONSTRAINT fk_nonprofit_to_affiliate FOREIGN KEY (affiliate_id) REFERENCES affiliates(affiliate_id)
 )

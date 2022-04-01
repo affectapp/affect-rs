@@ -1,0 +1,1 @@
+ALTER TABLE affiliates DROP CONSTRAINT fk_affiliate_to_nonprofit;

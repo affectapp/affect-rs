@@ -1,7 +1,7 @@
 use crate::protobuf::into::IntoProto;
 use affect_api::affect::{
     affiliate_service_server::AffiliateService, Affiliate, AffiliateLink, AffiliateLinkType,
-    BusinessType, CreateAffiliateRequest, GenerateAffiliateLinkRequest,
+    BusinessType, CreateAffiliateRequest, GenerateAffiliateLinkRequest, RefreshAffiliateRequest,
 };
 use affect_status::{internal, invalid_argument, not_found, Status};
 use affect_storage::{
@@ -18,14 +18,14 @@ use uuid::Uuid;
 
 use affect_storage::stores::affiliate::BusinessType as StoreBusinessType;
 
-pub struct AffiliateServiceImpl<Client, Store, TStore> {
-    database: Arc<Client>,
+pub struct AffiliateServiceImpl<Db, Store, TStore> {
+    database: Arc<Db>,
     stripe: Arc<stripe::Client>,
-    _marker: PhantomData<fn() -> (Store, TStore)>,
+    _marker: PhantomData<(Store, TStore)>,
 }
 
-impl<Client, Store, TStore> AffiliateServiceImpl<Client, Store, TStore> {
-    pub fn new(database: Arc<Client>, stripe: Arc<stripe::Client>) -> Self {
+impl<Db, Store, TStore> AffiliateServiceImpl<Db, Store, TStore> {
+    pub fn new(database: Arc<Db>, stripe: Arc<stripe::Client>) -> Self {
         Self {
             database,
             stripe,
@@ -35,9 +35,9 @@ impl<Client, Store, TStore> AffiliateServiceImpl<Client, Store, TStore> {
 }
 
 #[async_trait]
-impl<Client, Store, TStore> AffiliateService for AffiliateServiceImpl<Client, Store, TStore>
+impl<Db, Store, TStore> AffiliateService for AffiliateServiceImpl<Db, Store, TStore>
 where
-    Client: DatabaseClient<Store, TStore> + 'static,
+    Db: DatabaseClient<Store, TStore> + 'static,
     Store: AffiliateStore + OnDemandStore + 'static,
     TStore: AffiliateStore + TransactionalStore + 'static,
     Self: Sync + Send,
@@ -62,6 +62,14 @@ where
             .filter(|s| !s.is_empty())
             .ok_or(invalid_argument!("'contact_email' must be specified"))?;
 
+        let asserted_nonprofit_id = Some(message.asserted_nonprofit_id.clone())
+            .filter(|s| !s.is_empty())
+            .ok_or(invalid_argument!(
+                "'asserted_nonprofit_id' must be specified"
+            ))?
+            .parse::<Uuid>()
+            .map_err(|e| invalid_argument!("'asserted_nonprofit_id' is invalid: {:?}", e))?;
+
         let stripe_business_type = match message.business_type() {
             BusinessType::Unspecified => {
                 return Err(invalid_argument!("'business_type' must be specified"))
@@ -79,7 +87,8 @@ where
             requested: Some(true),
         });
         capabilities.card_payments = Some(stripe::CreateAccountCapabilitiesCardPayments {
-            requested: Some(true),
+            // requested: Some(true),
+            requested: Some(false),
         });
         create_stripe_account.capabilities = Some(capabilities);
         create_stripe_account.email = Some(&contact_email);
@@ -120,6 +129,7 @@ where
                         return Err(internal!("expected stripe account business type"));
                     }
                 },
+                asserted_nonprofit_id,
             })
             .await?;
         txn.add_affiliate_manager(NewAffiliateManagerRow {
@@ -181,11 +191,11 @@ where
                         collect: None,
                         expand: &[],
                         refresh_url: Some(&format!(
-                            "https://web.affect.app/#/affiliate/{}/stripe_onboarding",
+                            "https://web.affect.app/#/affiliate/{}/stripe/onboarding",
                             affiliate_row.affiliate_id.to_string()
                         )),
                         return_url: Some(&format!(
-                            "https://web.affect.app/#/affiliate/{}",
+                            "https://web.affect.app/#/affiliate/{}/stripe/return",
                             affiliate_row.affiliate_id.to_string(),
                         )),
                     },
@@ -205,7 +215,7 @@ where
                     &self.stripe,
                     &stripe_account_id,
                     &format!(
-                        "https://web.affect.app/#/affiliate/{}",
+                        "https://web.affect.app/#/affiliate/{}/stripe/return",
                         affiliate_row.affiliate_id.to_string(),
                     ),
                 )
@@ -221,5 +231,48 @@ where
         };
 
         Ok(Response::new(link))
+    }
+
+    async fn refresh_affiliate(
+        &self,
+        request: Request<RefreshAffiliateRequest>,
+    ) -> Result<Response<Affiliate>, Status> {
+        let message = request.into_inner();
+        let affiliate_id = Some(message.affiliate_id.to_string())
+            .filter(|s| !s.is_empty())
+            .ok_or(invalid_argument!("'affiliate_id' must be specified"))?;
+
+        let affiliate_row = match self
+            .database
+            .on_demand()
+            .find_affiliate_by_id(
+                affiliate_id
+                    .parse()
+                    .map_err(|e| invalid_argument!("'affiliate_id' is invalid: {:?}", e))?,
+            )
+            .await?
+        {
+            Some(affiliate_row) => affiliate_row,
+            None => {
+                return Err(not_found!("affiliate not found"));
+            }
+        };
+
+        let stripe_account_id = affiliate_row
+            .stripe_account_id
+            .parse::<stripe::AccountId>()
+            .map_err(|e| internal!("failed to parse stripe account id: {:?}", e))?;
+
+        let stripe_account = stripe::Account::retrieve(&self.stripe, &stripe_account_id, &[])
+            .await
+            .map_err(|e| internal!("failed to retrieve stripe account: {:?}", e))?;
+
+        let payouts_enabled = stripe_account
+            .payouts_enabled
+            .ok_or(internal!("expected stripe account 'payouts_enabled' field"))?;
+        let country = stripe_account.country;
+        let business_name = stripe_account.business_profile.map(|p| p.name).flatten();
+
+        Ok(Response::new(affiliate_row.into_proto()?))
     }
 }

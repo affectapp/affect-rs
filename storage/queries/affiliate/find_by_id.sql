@@ -5,6 +5,7 @@ SELECT affiliate_id,
   company_name,
   contact_email,
   business_type as "business_type: _",
+  asserted_nonprofit_id,
   COALESCE(ARRAY_AGG(affiliate_managers), '{}') AS "affiliate_managers!: _"
 FROM affiliates
   JOIN affiliate_managers USING (affiliate_id)
