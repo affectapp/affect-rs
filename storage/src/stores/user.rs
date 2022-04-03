@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromRow)]
+#[derive(Clone, Debug, FromRow, sqlx::Decode)]
 pub struct UserRow {
     pub user_id: Uuid,
     pub create_time: DateTime<Utc>,

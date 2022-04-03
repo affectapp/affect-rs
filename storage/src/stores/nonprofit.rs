@@ -20,6 +20,36 @@ pub struct NonprofitRow {
     pub affiliate_id: Option<Uuid>,
 }
 
+impl<'a> sqlx::decode::Decode<'a, sqlx::Postgres> for NonprofitRow {
+    fn decode(
+        value: sqlx::postgres::PgValueRef<'a>,
+    ) -> Result<Self, Box<dyn std::error::Error + 'static + Send + Sync>> {
+        let mut decoder = sqlx::postgres::types::PgRecordDecoder::new(value)?;
+        let nonprofit_id = decoder.try_decode::<Uuid>()?;
+        let create_time = decoder.try_decode::<DateTime<Utc>>()?;
+        let update_time = decoder.try_decode::<DateTime<Utc>>()?;
+        let change_nonprofit_id = decoder.try_decode::<Option<String>>()?;
+        let icon_url = decoder.try_decode::<String>()?;
+        let name = decoder.try_decode::<String>()?;
+        let ein = decoder.try_decode::<String>()?;
+        let mission = decoder.try_decode::<String>()?;
+        let category = decoder.try_decode::<String>()?;
+        let affiliate_id = decoder.try_decode::<Option<Uuid>>()?;
+        Ok(NonprofitRow {
+            nonprofit_id,
+            create_time,
+            update_time,
+            change_nonprofit_id,
+            icon_url,
+            name,
+            ein,
+            mission,
+            category,
+            affiliate_id,
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct NewNonprofitRow {
     pub create_time: DateTime<Utc>,

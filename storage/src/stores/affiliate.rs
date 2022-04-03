@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use sqlx::{postgres::PgTypeInfo, FromRow, PgExecutor, Postgres};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromRow)]
+#[derive(Clone, Debug, FromRow, sqlx::Decode)]
 pub struct AffiliateRow {
     pub affiliate_id: Uuid,
     pub create_time: DateTime<Utc>,

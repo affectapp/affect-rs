@@ -8,7 +8,7 @@ use sqlx::FromRow;
 use sqlx::PgExecutor;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromRow, PartialEq)]
+#[derive(Clone, Debug, FromRow, sqlx::Decode)]
 pub struct ItemRow {
     pub item_id: Uuid,
     pub create_time: DateTime<Utc>,

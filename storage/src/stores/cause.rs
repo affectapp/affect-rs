@@ -10,7 +10,7 @@ use sqlx::postgres::PgTypeInfo;
 use sqlx::{FromRow, PgExecutor, Postgres};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromRow)]
+#[derive(Clone, Debug, FromRow, sqlx::Decode)]
 pub struct CauseRow {
     pub cause_id: Uuid,
     pub create_time: DateTime<Utc>,
