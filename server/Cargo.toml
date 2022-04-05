@@ -4,7 +4,7 @@ name = "affect-server"
 version = "0.1.0"
 
 [dependencies]
-affect-api = { git = "https://github.com/affectapp/api", rev = "fe9763a" }
+affect-api = { git = "https://github.com/affectapp/api", rev = "232f626" }
 affect-storage = { path = "../storage" }
 affect-status = { path = "../status" }
 async-trait = "0.1"

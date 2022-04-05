@@ -1,5 +1,5 @@
 SELECT nonprofit AS "nonprofit!: _",
-  full_affiliate AS "full_affiliate: _"
+  affiliate AS "affiliate: _"
 FROM full_nonprofits
 WHERE (
     (nonprofit).create_time,

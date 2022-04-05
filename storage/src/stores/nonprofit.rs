@@ -1,6 +1,5 @@
 use crate::{
-    page_token::PageTokenable, sqlx::store::PgOnDemandStore, stores::affiliate::FullAffiliateRow,
-    Error,
+    page_token::PageTokenable, sqlx::store::PgOnDemandStore, stores::affiliate::AffiliateRow, Error,
 };
 use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
@@ -63,7 +62,7 @@ impl<'a> sqlx::decode::Decode<'a, sqlx::Postgres> for NonprofitRow {
 #[derive(Clone, Debug, FromRow, PartialEq)]
 pub struct FullNonprofitRow {
     pub nonprofit: NonprofitRow,
-    pub full_affiliate: Option<FullAffiliateRow>,
+    pub affiliate: Option<AffiliateRow>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
