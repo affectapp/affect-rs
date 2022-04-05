@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use super::nonprofit::NonprofitRow;
 
-#[derive(Clone, Debug, FromRow, PartialEq, sqlx::Decode)]
+#[derive(Clone, Debug, PartialEq, FromRow, sqlx::Decode)]
 pub struct AffiliateRow {
     pub affiliate_id: Uuid,
     pub create_time: DateTime<Utc>,
@@ -24,11 +24,17 @@ impl sqlx::Type<Postgres> for AffiliateRow {
     }
 }
 
-#[derive(Clone, Debug, FromRow)]
+#[derive(Clone, Debug, PartialEq, FromRow, sqlx::Decode)]
 pub struct FullAffiliateRow {
     pub affiliate: AffiliateRow,
     pub asserted_nonprofit: Option<NonprofitRow>,
     pub affiliate_managers: AffiliateManagerRowVec,
+}
+
+impl sqlx::Type<Postgres> for FullAffiliateRow {
+    fn type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("full_affiliates")
+    }
 }
 
 #[derive(Clone, Debug, FromRow)]
@@ -42,7 +48,7 @@ pub struct NewAffiliateRow {
     pub asserted_nonprofit_id: Uuid,
 }
 
-#[derive(Clone, Debug, FromRow, sqlx::Type)]
+#[derive(Clone, Debug, PartialEq, FromRow, sqlx::Type)]
 pub struct AffiliateManagerRow {
     pub affiliate_id: Uuid,
     pub user_id: Uuid,
@@ -58,7 +64,7 @@ pub struct NewAffiliateManagerRow {
     pub update_time: DateTime<Utc>,
 }
 
-#[derive(Clone, Debug, sqlx::Decode)]
+#[derive(Clone, Debug, PartialEq, sqlx::Decode)]
 pub struct AffiliateManagerRowVec(Vec<AffiliateManagerRow>);
 
 impl AffiliateManagerRowVec {
