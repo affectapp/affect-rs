@@ -1,9 +1,12 @@
-use crate::{page_token::PageTokenable, sqlx::store::PgOnDemandStore, Error};
+use crate::{
+    page_token::PageTokenable, sqlx::store::PgOnDemandStore, stores::affiliate::AffiliateRow, Error,
+};
 use async_trait::async_trait;
 use chrono::serde::ts_nanoseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::postgres::PgTypeInfo;
+use sqlx::{FromRow, Postgres};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, FromRow, PartialEq)]
@@ -18,6 +21,12 @@ pub struct NonprofitRow {
     pub mission: String,
     pub category: String,
     pub affiliate_id: Option<Uuid>,
+}
+
+impl sqlx::Type<Postgres> for NonprofitRow {
+    fn type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("nonprofits")
+    }
 }
 
 impl<'a> sqlx::decode::Decode<'a, sqlx::Postgres> for NonprofitRow {
@@ -50,6 +59,12 @@ impl<'a> sqlx::decode::Decode<'a, sqlx::Postgres> for NonprofitRow {
     }
 }
 
+#[derive(Clone, Debug, FromRow, PartialEq)]
+pub struct FullNonprofitRow {
+    pub nonprofit: NonprofitRow,
+    pub affiliate: Option<AffiliateRow>,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct NewNonprofitRow {
     pub create_time: DateTime<Utc>,
@@ -80,18 +95,26 @@ impl PageTokenable<NonprofitPageToken> for NonprofitRow {
     }
 }
 
+impl PageTokenable<NonprofitPageToken> for FullNonprofitRow {
+    fn page_token(&self) -> NonprofitPageToken {
+        self.nonprofit.page_token()
+    }
+}
+
 #[async_trait]
 pub trait NonprofitStore: Sync + Send {
     async fn add_nonprofit(&self, new_nonprofit: NewNonprofitRow) -> Result<NonprofitRow, Error>;
 
-    async fn find_nonprofit_by_id(&self, nonprofit_id: Uuid)
-        -> Result<Option<NonprofitRow>, Error>;
+    async fn find_nonprofit_by_id(
+        &self,
+        nonprofit_id: Uuid,
+    ) -> Result<Option<FullNonprofitRow>, Error>;
 
     async fn list_nonprofits(
         &self,
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
-    ) -> Result<Vec<NonprofitRow>, Error>;
+    ) -> Result<Vec<FullNonprofitRow>, Error>;
 
     async fn count_nonprofits(&self) -> Result<i64, Error>;
 
@@ -99,7 +122,7 @@ pub trait NonprofitStore: Sync + Send {
         &self,
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
-    ) -> Result<(Vec<NonprofitRow>, i64), Error> {
+    ) -> Result<(Vec<FullNonprofitRow>, i64), Error> {
         let list_fut = self.list_nonprofits(page_size, page_token);
         let count_fut = self.count_nonprofits();
         futures::try_join!(list_fut, count_fut)
@@ -110,7 +133,7 @@ pub trait NonprofitStore: Sync + Send {
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
         query: &str,
-    ) -> Result<Vec<NonprofitRow>, Error>;
+    ) -> Result<Vec<FullNonprofitRow>, Error>;
 
     async fn count_nonprofits_by_search(&self, query: &str) -> Result<i64, Error>;
 
@@ -119,7 +142,7 @@ pub trait NonprofitStore: Sync + Send {
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
         query: &str,
-    ) -> Result<(Vec<NonprofitRow>, i64), Error> {
+    ) -> Result<(Vec<FullNonprofitRow>, i64), Error> {
         let list_fut = self.list_nonprofits_by_search(page_size, page_token, query);
         let count_fut = self.count_nonprofits_by_search(query);
         futures::try_join!(list_fut, count_fut)
@@ -149,9 +172,9 @@ impl NonprofitStore for PgOnDemandStore {
     async fn find_nonprofit_by_id(
         &self,
         nonprofit_id: Uuid,
-    ) -> Result<Option<NonprofitRow>, Error> {
+    ) -> Result<Option<FullNonprofitRow>, Error> {
         Ok(sqlx::query_file_as!(
-            NonprofitRow,
+            FullNonprofitRow,
             "queries/nonprofit/find_by_id.sql",
             nonprofit_id
         )
@@ -163,12 +186,12 @@ impl NonprofitStore for PgOnDemandStore {
         &self,
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
-    ) -> Result<Vec<NonprofitRow>, Error> {
+    ) -> Result<Vec<FullNonprofitRow>, Error> {
         let rows = match page_token {
             Some(page_token) => {
                 // Query by page token:
                 sqlx::query_file_as!(
-                    NonprofitRow,
+                    FullNonprofitRow,
                     "queries/nonprofit/list_at_page.sql",
                     page_token.create_time,
                     page_token.nonprofit_id,
@@ -179,7 +202,7 @@ impl NonprofitStore for PgOnDemandStore {
             }
             None => {
                 // Query first page:
-                sqlx::query_file_as!(NonprofitRow, "queries/nonprofit/list.sql", page_size)
+                sqlx::query_file_as!(FullNonprofitRow, "queries/nonprofit/list.sql", page_size)
                     .fetch_all(&*self.pool)
                     .await?
             }
@@ -191,8 +214,7 @@ impl NonprofitStore for PgOnDemandStore {
         Ok(sqlx::query_file!("queries/nonprofit/count.sql")
             .fetch_one(&*self.pool)
             .await?
-            .count
-            .expect("null count query"))
+            .count)
     }
 
     async fn list_nonprofits_by_search(
@@ -200,12 +222,12 @@ impl NonprofitStore for PgOnDemandStore {
         page_size: i64,
         page_token: Option<NonprofitPageToken>,
         query: &str,
-    ) -> Result<Vec<NonprofitRow>, Error> {
+    ) -> Result<Vec<FullNonprofitRow>, Error> {
         let rows = match page_token {
             Some(page_token) => {
                 // Query by page token:
                 sqlx::query_file_as!(
-                    NonprofitRow,
+                    FullNonprofitRow,
                     "queries/nonprofit/list_by_search_at_page.sql",
                     query,
                     page_token.create_time,
@@ -218,7 +240,7 @@ impl NonprofitStore for PgOnDemandStore {
             None => {
                 // Query first page:
                 sqlx::query_file_as!(
-                    NonprofitRow,
+                    FullNonprofitRow,
                     "queries/nonprofit/list_by_search.sql",
                     query,
                     page_size
@@ -235,8 +257,7 @@ impl NonprofitStore for PgOnDemandStore {
             sqlx::query_file!("queries/nonprofit/count_by_search.sql", query)
                 .fetch_one(&*self.pool)
                 .await?
-                .count
-                .expect("null count query"),
+                .count,
         )
     }
 }

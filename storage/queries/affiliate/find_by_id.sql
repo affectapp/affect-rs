@@ -1,13 +1,5 @@
-SELECT affiliate_id,
-  affiliates.create_time,
-  affiliates.update_time,
-  stripe_account_id,
-  company_name,
-  contact_email,
-  business_type as "business_type: _",
-  asserted_nonprofit_id,
-  COALESCE(ARRAY_AGG(affiliate_managers), '{}') AS "affiliate_managers!: _"
-FROM affiliates
-  JOIN affiliate_managers USING (affiliate_id)
-WHERE affiliate_id = $1
-GROUP BY affiliate_id
+SELECT affiliate AS "affiliate!: _",
+  asserted_nonprofit AS "asserted_nonprofit: _",
+  affiliate_managers AS "affiliate_managers!: _"
+FROM full_affiliates
+WHERE (affiliate).affiliate_id = $1

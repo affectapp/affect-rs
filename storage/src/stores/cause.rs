@@ -19,14 +19,16 @@ pub struct CauseRow {
     pub name: String,
 }
 
+impl sqlx::Type<Postgres> for CauseRow {
+    fn type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("causes")
+    }
+}
+
 #[derive(Clone, Debug, FromRow)]
-pub struct CauseFullRow {
-    pub cause_id: Uuid,
-    pub create_time: DateTime<Utc>,
-    pub update_time: DateTime<Utc>,
-    pub user_id: Uuid,
-    pub name: String,
-    pub recipients: CauseRecipientRowVec,
+pub struct FullCauseRow {
+    pub cause: CauseRow,
+    pub cause_recipients: CauseRecipientRowVec,
 }
 
 #[derive(Clone, Debug)]
@@ -37,12 +39,18 @@ pub struct NewCauseRow {
     pub name: String,
 }
 
-#[derive(Clone, Debug, FromRow, sqlx::Type)]
+#[derive(Clone, Debug, FromRow, sqlx::Decode)]
 pub struct CauseRecipientRow {
     pub cause_id: Uuid,
     pub nonprofit_id: Uuid,
     pub create_time: DateTime<Utc>,
     pub update_time: DateTime<Utc>,
+}
+
+impl sqlx::Type<Postgres> for CauseRecipientRow {
+    fn type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("cause_recipients")
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -84,12 +92,9 @@ impl PageTokenable<CausePageToken> for CauseRow {
     }
 }
 
-impl PageTokenable<CausePageToken> for CauseFullRow {
+impl PageTokenable<CausePageToken> for FullCauseRow {
     fn page_token(&self) -> CausePageToken {
-        CausePageToken {
-            create_time: self.create_time.clone(),
-            cause_id: self.cause_id.clone(),
-        }
+        self.cause.page_token()
     }
 }
 
@@ -102,7 +107,7 @@ pub trait CauseStore: Send + Sync {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<Vec<CauseFullRow>, Error>;
+    ) -> Result<Vec<FullCauseRow>, Error>;
 
     async fn count_causes_for_user(&self, user_id: Uuid) -> Result<i64, Error>;
 
@@ -111,7 +116,7 @@ pub trait CauseStore: Send + Sync {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<(Vec<CauseFullRow>, i64), Error> {
+    ) -> Result<(Vec<FullCauseRow>, i64), Error> {
         let list_fut = self.list_causes_for_user(page_size, page_token, user_id);
         let count_fut = self.count_causes_for_user(user_id);
         futures::try_join!(list_fut, count_fut)
@@ -139,7 +144,7 @@ impl CauseStore for PgOnDemandStore {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<Vec<CauseFullRow>, Error> {
+    ) -> Result<Vec<FullCauseRow>, Error> {
         Ok(list_causes_for_user(&*self.pool, page_size, page_token, user_id).await?)
     }
 
@@ -174,7 +179,7 @@ impl<'a> CauseStore for PgTransactionalStore<'a> {
         page_size: i64,
         page_token: Option<CausePageToken>,
         user_id: Uuid,
-    ) -> Result<Vec<CauseFullRow>, Error> {
+    ) -> Result<Vec<FullCauseRow>, Error> {
         let mut lock = self.txn.lock().await;
         Ok(list_causes_for_user(&mut *lock, page_size, page_token, user_id).await?)
     }
@@ -269,7 +274,7 @@ async fn list_causes_for_user<'a, E>(
     page_size: i64,
     page_token: Option<CausePageToken>,
     user_id: Uuid,
-) -> Result<Vec<CauseFullRow>, Error>
+) -> Result<Vec<FullCauseRow>, Error>
 where
     E: PgExecutor<'a>,
 {
@@ -277,7 +282,7 @@ where
         Some(page_token) => {
             // Query by page token:
             sqlx::query_file_as!(
-                CauseFullRow,
+                FullCauseRow,
                 "queries/cause/list_at_page_for_user.sql",
                 page_token.create_time,
                 page_token.cause_id,
@@ -290,7 +295,7 @@ where
         None => {
             // Query first page:
             sqlx::query_file_as!(
-                CauseFullRow,
+                FullCauseRow,
                 "queries/cause/list_for_user.sql",
                 page_size,
                 &user_id

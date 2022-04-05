@@ -3,7 +3,7 @@ use affect_api::affect::{
     list_nonprofits_request::Filter, nonprofit_service_server::NonprofitService,
     ListNonprofitsRequest, *,
 };
-use affect_status::{internal, invalid_argument, not_found};
+use affect_status::{invalid_argument, not_found};
 use affect_storage::{
     database::{
         client::DatabaseClient,
@@ -57,26 +57,14 @@ where
             .parse::<Uuid>()
             .map_err(|e| invalid_argument!("'nonprofit_id' is invalid: {:?}", e))?;
 
-        let nonprofit_row = self
+        let full_nonprofit_row = self
             .database
             .on_demand()
             .find_nonprofit_by_id(nonprofit_id)
             .await?
             .ok_or(not_found!("nonprofit not found"))?;
-        let affiliate_row = match nonprofit_row.affiliate_id {
-            Some(affiliate_id) => Some(
-                self.database
-                    .on_demand()
-                    .find_affiliate_by_id(affiliate_id)
-                    .await?
-                    .ok_or(internal!("affiliate not found"))?,
-            ),
-            None => None,
-        };
 
-        let nonprofit_and_affiliate = (nonprofit_row, affiliate_row);
-
-        Ok(Response::new(nonprofit_and_affiliate.into_proto()?))
+        Ok(Response::new(full_nonprofit_row.into_proto()?))
     }
 
     async fn list_nonprofits(
@@ -111,17 +99,7 @@ where
         // Map rows to protos and serialize page token.
         let mut nonprofits: Vec<Nonprofit> = Vec::new();
         for row in page_rows {
-            let affiliate_row = match row.affiliate_id {
-                Some(affiliate_id) => Some(
-                    self.database
-                        .on_demand()
-                        .find_affiliate_by_id(affiliate_id)
-                        .await?
-                        .ok_or(internal!("affiliate not found"))?,
-                ),
-                None => None,
-            };
-            nonprofits.push((row.clone(), affiliate_row).into_proto()?);
+            nonprofits.push(row.clone().into_proto()?);
         }
 
         // Next page token or empty string.

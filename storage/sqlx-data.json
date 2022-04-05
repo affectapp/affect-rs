@@ -112,26 +112,6 @@
       ]
     }
   },
-  "20b3c4db991f33c2980f7271bf6129f5366a46d895ae6b2d511092575ff14c01": {
-    "query": "SELECT COUNT(*) AS count\nFROM nonprofits\nWHERE name ILIKE CONCAT('%', $1::text, '%')",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "count",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        null
-      ]
-    }
-  },
   "26897c1054f7d3d145b2dcb139eda4d86ef2f81e038caae84f82e204f498d8ee": {
     "query": "INSERT INTO nonprofits (\n    nonprofit_id,\n    create_time,\n    update_time,\n    change_nonprofit_id,\n    icon_url,\n    name,\n    ein,\n    mission,\n    category,\n    affiliate_id\n  )\nVALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, $9)\nRETURNING *",
     "describe": {
@@ -276,122 +256,46 @@
       ]
     }
   },
-  "34a46ebfa3f8faf20cfbb18ef5bbd4da69596c87bcdb06a5df2dc14fc6430986": {
-    "query": "SELECT causes.*,\n  COALESCE(ARRAY_AGG(cause_recipients), '{}') AS \"recipients!: _\"\nFROM causes\n  JOIN cause_recipients USING (cause_id)\nWHERE (causes.create_time, causes.cause_id) >= ($1, $2)\n  AND causes.user_id = $3\nGROUP BY causes.cause_id\nORDER BY causes.create_time ASC,\n  causes.cause_id ASC\nLIMIT $4",
+  "32a52ba664a2a23d934fb6e2666a440ff2c9a664c6ef5bc68af369a905ae2528": {
+    "query": "SELECT cause AS \"cause!: _\",\n  cause_recipients AS \"cause_recipients!: _\"\nFROM full_causes\nWHERE (cause).user_id = $2\nORDER BY (cause).create_time ASC,\n  (cause).cause_id ASC\nLIMIT $1",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
-          "name": "cause_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "recipients!: _",
+          "name": "cause!: _",
           "type_info": {
             "Custom": {
-              "name": "_cause_recipients",
+              "name": "causes",
               "kind": {
-                "Array": {
-                  "Custom": {
-                    "name": "cause_recipients",
-                    "kind": {
-                      "Composite": [
-                        [
-                          "cause_id",
-                          "Uuid"
-                        ],
-                        [
-                          "nonprofit_id",
-                          "Uuid"
-                        ],
-                        [
-                          "create_time",
-                          "Timestamptz"
-                        ],
-                        [
-                          "update_time",
-                          "Timestamptz"
-                        ]
-                      ]
-                    }
-                  }
-                }
+                "Composite": [
+                  [
+                    "cause_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "user_id",
+                    "Uuid"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ]
+                ]
               }
             }
           }
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Timestamptz",
-          "Uuid",
-          "Uuid",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        null
-      ]
-    }
-  },
-  "38628932f9f031086ee182bdc4d9d7207444478d951ba7be0a5fa370ac9f7659": {
-    "query": "SELECT causes.*,\n  COALESCE(ARRAY_AGG(cause_recipients), '{}') AS \"recipients!: _\"\nFROM causes\n  JOIN cause_recipients USING (cause_id)\nWHERE user_id = $2\nGROUP BY causes.cause_id\nORDER BY causes.create_time ASC,\n  causes.cause_id ASC\nLIMIT $1",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "cause_id",
-          "type_info": "Uuid"
         },
         {
           "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "user_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 4,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "recipients!: _",
+          "name": "cause_recipients!: _",
           "type_info": {
             "Custom": {
               "name": "_cause_recipients",
@@ -433,12 +337,134 @@
         ]
       },
       "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        null
+        true,
+        true
+      ]
+    }
+  },
+  "3b44a47129d98bcdd994300d13cb1643a4c90fa2d5776abbee93739d52824f81": {
+    "query": "SELECT nonprofit AS \"nonprofit!: _\",\n  affiliate AS \"affiliate!: _\"\nFROM full_nonprofits\nORDER BY (nonprofit).create_time ASC,\n  (nonprofit).nonprofit_id ASC\nLIMIT $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit!: _",
+          "type_info": {
+            "Custom": {
+              "name": "nonprofits",
+              "kind": {
+                "Composite": [
+                  [
+                    "nonprofit_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "change_nonprofit_id",
+                    "Varchar"
+                  ],
+                  [
+                    "icon_url",
+                    "Varchar"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ],
+                  [
+                    "ein",
+                    "Varchar"
+                  ],
+                  [
+                    "mission",
+                    "Text"
+                  ],
+                  [
+                    "category",
+                    "Varchar"
+                  ],
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 1,
+          "name": "affiliate!: _",
+          "type_info": {
+            "Custom": {
+              "name": "affiliates",
+              "kind": {
+                "Composite": [
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "stripe_account_id",
+                    "Varchar"
+                  ],
+                  [
+                    "company_name",
+                    "Varchar"
+                  ],
+                  [
+                    "contact_email",
+                    "Varchar"
+                  ],
+                  [
+                    "business_type",
+                    {
+                      "Custom": {
+                        "name": "business_type",
+                        "kind": {
+                          "Enum": [
+                            "individual",
+                            "company",
+                            "nonprofit",
+                            "government_entity"
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  [
+                    "asserted_nonprofit_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        true,
+        true
       ]
     }
   },
@@ -492,64 +518,122 @@
       ]
     }
   },
-  "4fc04938430cd66139ed4d6994ca366aede15ca58fec3022651b45e552d407f8": {
-    "query": "SELECT affiliate_id,\n  affiliates.create_time,\n  affiliates.update_time,\n  stripe_account_id,\n  company_name,\n  contact_email,\n  business_type as \"business_type: _\",\n  asserted_nonprofit_id,\n  COALESCE(ARRAY_AGG(affiliate_managers), '{}') AS \"affiliate_managers!: _\"\nFROM affiliates\n  JOIN affiliate_managers USING (affiliate_id)\nWHERE affiliate_id = $1\nGROUP BY affiliate_id",
+  "51014313325255f6750bf052d432721ad3e868b73c4e63ff6c96ddf6af3dd61e": {
+    "query": "SELECT affiliate AS \"affiliate!: _\",\n  asserted_nonprofit AS \"asserted_nonprofit: _\",\n  affiliate_managers AS \"affiliate_managers!: _\"\nFROM full_affiliates\nWHERE (affiliate).affiliate_id = $1",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "stripe_account_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "company_name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "contact_email",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "business_type: _",
+          "name": "affiliate!: _",
           "type_info": {
             "Custom": {
-              "name": "business_type",
+              "name": "affiliates",
               "kind": {
-                "Enum": [
-                  "individual",
-                  "company",
-                  "nonprofit",
-                  "government_entity"
+                "Composite": [
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "stripe_account_id",
+                    "Varchar"
+                  ],
+                  [
+                    "company_name",
+                    "Varchar"
+                  ],
+                  [
+                    "contact_email",
+                    "Varchar"
+                  ],
+                  [
+                    "business_type",
+                    {
+                      "Custom": {
+                        "name": "business_type",
+                        "kind": {
+                          "Enum": [
+                            "individual",
+                            "company",
+                            "nonprofit",
+                            "government_entity"
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  [
+                    "asserted_nonprofit_id",
+                    "Uuid"
+                  ]
                 ]
               }
             }
           }
         },
         {
-          "ordinal": 7,
-          "name": "asserted_nonprofit_id",
-          "type_info": "Uuid"
+          "ordinal": 1,
+          "name": "asserted_nonprofit: _",
+          "type_info": {
+            "Custom": {
+              "name": "nonprofits",
+              "kind": {
+                "Composite": [
+                  [
+                    "nonprofit_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "change_nonprofit_id",
+                    "Varchar"
+                  ],
+                  [
+                    "icon_url",
+                    "Varchar"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ],
+                  [
+                    "ein",
+                    "Varchar"
+                  ],
+                  [
+                    "mission",
+                    "Text"
+                  ],
+                  [
+                    "category",
+                    "Varchar"
+                  ],
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
         },
         {
-          "ordinal": 8,
+          "ordinal": 2,
           "name": "affiliate_managers!: _",
           "type_info": {
             "Custom": {
@@ -591,241 +675,96 @@
         ]
       },
       "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        null
-      ]
-    }
-  },
-  "574b98d723fae9b580eb455dfad8f27bbff9cd42776fd39a8f9f6e94798f9864": {
-    "query": "SELECT *\nFROM nonprofits\nWHERE name ILIKE CONCAT('%', $1::text, '%')\n  AND (create_time, nonprofit_id) >= ($2, $3)\nORDER BY create_time ASC,\n  nonprofit_id ASC\nLIMIT $4",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "nonprofit_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "change_nonprofit_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "icon_url",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "ein",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 7,
-          "name": "mission",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 8,
-          "name": "category",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 9,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Timestamptz",
-          "Uuid",
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
         true,
-        false,
-        false,
-        false,
-        false,
-        false,
+        true,
         true
       ]
     }
   },
-  "58b3f1ed997fdf5faa7c5a551b8f991fa1dfbfa5ffc1b68ae91ad355bf0d1c3c": {
-    "query": "SELECT *\nFROM nonprofits\nWHERE nonprofit_id = $1",
+  "553d38efbf507c99b2c12c058f3e1c4357bc2ed6fbb9156ede78703228a4ee31": {
+    "query": "SELECT cause AS \"cause!: _\",\n  cause_recipients AS \"cause_recipients!: _\"\nFROM full_causes\nWHERE ((cause).create_time, (cause).cause_id) >= ($1, $2)\n  AND (cause).user_id = $3\nORDER BY (cause).create_time ASC,\n  (cause).cause_id ASC\nLIMIT $4",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
-          "name": "nonprofit_id",
-          "type_info": "Uuid"
+          "name": "cause!: _",
+          "type_info": {
+            "Custom": {
+              "name": "causes",
+              "kind": {
+                "Composite": [
+                  [
+                    "cause_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "user_id",
+                    "Uuid"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ]
+                ]
+              }
+            }
+          }
         },
         {
           "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "change_nonprofit_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "icon_url",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "ein",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 7,
-          "name": "mission",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 8,
-          "name": "category",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 9,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true
-      ]
-    }
-  },
-  "5b5eeda237e1b55da34a92969bf4079db732891bf24de4a8644414c8ca9ddb99": {
-    "query": "SELECT *\nFROM nonprofits\nWHERE (create_time, nonprofit_id) >= ($1, $2)\nORDER BY create_time ASC,\n  nonprofit_id ASC\nLIMIT $3",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "nonprofit_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "change_nonprofit_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "icon_url",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "ein",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 7,
-          "name": "mission",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 8,
-          "name": "category",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 9,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
+          "name": "cause_recipients!: _",
+          "type_info": {
+            "Custom": {
+              "name": "_cause_recipients",
+              "kind": {
+                "Array": {
+                  "Custom": {
+                    "name": "cause_recipients",
+                    "kind": {
+                      "Composite": [
+                        [
+                          "cause_id",
+                          "Uuid"
+                        ],
+                        [
+                          "nonprofit_id",
+                          "Uuid"
+                        ],
+                        [
+                          "create_time",
+                          "Timestamptz"
+                        ],
+                        [
+                          "update_time",
+                          "Timestamptz"
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "parameters": {
         "Left": [
           "Timestamptz",
           "Uuid",
+          "Uuid",
           "Int8"
         ]
       },
       "nullable": [
-        false,
-        false,
-        false,
         true,
-        false,
-        false,
-        false,
-        false,
-        false,
         true
       ]
     }
@@ -1010,24 +949,6 @@
       ]
     }
   },
-  "815e33bb206cf58561f08e459db5a60762033dc238e3f91c747369c84b7016b3": {
-    "query": "SELECT COUNT(*) AS count\nFROM nonprofits",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "count",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": []
-      },
-      "nullable": [
-        null
-      ]
-    }
-  },
   "8549634d3de5940b13be3c79ee2eabdd623c1bf6b1c86bd84708e8451ac9c352": {
     "query": "SELECT *\nFROM items\nWHERE (create_time, item_id) >= ($1, $2)\n  AND user_id = $3\nORDER BY create_time ASC,\n  item_id ASC\nLIMIT $4",
     "describe": {
@@ -1182,94 +1103,8 @@
       ]
     }
   },
-  "8d99f024e1fca60e7cebbce99248e1c57941d9483cc498ba1c3b0f06bd3c3475": {
-    "query": "SELECT *\nFROM nonprofits\nORDER BY create_time ASC,\n  nonprofit_id ASC\nLIMIT $1",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "nonprofit_id",
-          "type_info": "Uuid"
-        },
-        {
-          "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "change_nonprofit_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "icon_url",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "ein",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 7,
-          "name": "mission",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 8,
-          "name": "category",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 9,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Int8"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true
-      ]
-    }
-  },
-  "a012d50c6a90fcde64f9320632207097a5350c82e3264afb42cb3454a2cbb5c3": {
-    "query": "DELETE FROM accounts\r\nWHERE account_id = $1",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "a18412550fa8c3b9ec261c05d6402f7a3b128c4b0b2401d2ad25f7be05d29bee": {
-    "query": "SELECT COUNT(*) AS count\nFROM causes\nWHERE user_id = $1",
+  "9bd1cd4e6e6380d89aa29ca16f87c247b24eb1427fe8a881f6216ec8cc162153": {
+    "query": "SELECT COUNT(*) AS count\nFROM full_causes\nWHERE (cause).user_id = $1",
     "describe": {
       "columns": [
         {
@@ -1285,6 +1120,146 @@
       },
       "nullable": [
         null
+      ]
+    }
+  },
+  "a012d50c6a90fcde64f9320632207097a5350c82e3264afb42cb3454a2cbb5c3": {
+    "query": "DELETE FROM accounts\r\nWHERE account_id = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "a0c2e2e77c428395c39f97ee03b40dfac6cf0dee69fad79922789c65e8f0fac8": {
+    "query": "SELECT nonprofit AS \"nonprofit!: _\",\n  affiliate AS \"affiliate!: _\"\nFROM full_nonprofits\nWHERE (\n    (nonprofit).create_time,\n    (nonprofit).nonprofit_id\n  ) >= ($1, $2)\nORDER BY (nonprofit).create_time ASC,\n  (nonprofit).nonprofit_id ASC\nLIMIT $3",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit!: _",
+          "type_info": {
+            "Custom": {
+              "name": "nonprofits",
+              "kind": {
+                "Composite": [
+                  [
+                    "nonprofit_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "change_nonprofit_id",
+                    "Varchar"
+                  ],
+                  [
+                    "icon_url",
+                    "Varchar"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ],
+                  [
+                    "ein",
+                    "Varchar"
+                  ],
+                  [
+                    "mission",
+                    "Text"
+                  ],
+                  [
+                    "category",
+                    "Varchar"
+                  ],
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 1,
+          "name": "affiliate!: _",
+          "type_info": {
+            "Custom": {
+              "name": "affiliates",
+              "kind": {
+                "Composite": [
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "stripe_account_id",
+                    "Varchar"
+                  ],
+                  [
+                    "company_name",
+                    "Varchar"
+                  ],
+                  [
+                    "contact_email",
+                    "Varchar"
+                  ],
+                  [
+                    "business_type",
+                    {
+                      "Custom": {
+                        "name": "business_type",
+                        "kind": {
+                          "Enum": [
+                            "individual",
+                            "company",
+                            "nonprofit",
+                            "government_entity"
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  [
+                    "asserted_nonprofit_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Uuid",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        true,
+        true
       ]
     }
   },
@@ -1329,77 +1304,151 @@
       ]
     }
   },
-  "ad11c876643848e23fa8e1a33c1d59f3efac07e58a4c676391c6351d8305fe0e": {
-    "query": "SELECT *\nFROM nonprofits\nWHERE name ILIKE CONCAT('%', $1::text, '%')\nORDER BY create_time ASC,\n  nonprofit_id ASC\nLIMIT $2",
+  "ac315351ac0b60e15e3281f98ab8a305fd343dd561fe9ccc4e410d7a5b5c47a3": {
+    "query": "SELECT COUNT(*) AS \"count!\"\nFROM full_nonprofits\nWHERE (nonprofit).name ILIKE CONCAT('%', $1::text, '%')",
     "describe": {
       "columns": [
         {
           "ordinal": 0,
-          "name": "nonprofit_id",
-          "type_info": "Uuid"
+          "name": "count!",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
+  "acff6ec78fc3b7eb3d0aaecd75ef1795e1183a6a3f554c5e8a28fefc6713285c": {
+    "query": "SELECT nonprofit AS \"nonprofit!: _\",\n  affiliate AS \"affiliate!: _\"\nFROM full_nonprofits\nWHERE (nonprofit).name ILIKE CONCAT('%', $1::text, '%')\n  AND (\n    (nonprofit).create_time,\n    (nonprofit).nonprofit_id\n  ) >= ($2, $3)\nORDER BY (nonprofit).create_time ASC,\n  (nonprofit).nonprofit_id ASC\nLIMIT $4",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit!: _",
+          "type_info": {
+            "Custom": {
+              "name": "nonprofits",
+              "kind": {
+                "Composite": [
+                  [
+                    "nonprofit_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "change_nonprofit_id",
+                    "Varchar"
+                  ],
+                  [
+                    "icon_url",
+                    "Varchar"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ],
+                  [
+                    "ein",
+                    "Varchar"
+                  ],
+                  [
+                    "mission",
+                    "Text"
+                  ],
+                  [
+                    "category",
+                    "Varchar"
+                  ],
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
         },
         {
           "ordinal": 1,
-          "name": "create_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 2,
-          "name": "update_time",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "change_nonprofit_id",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "icon_url",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 6,
-          "name": "ein",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 7,
-          "name": "mission",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 8,
-          "name": "category",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 9,
-          "name": "affiliate_id",
-          "type_info": "Uuid"
+          "name": "affiliate!: _",
+          "type_info": {
+            "Custom": {
+              "name": "affiliates",
+              "kind": {
+                "Composite": [
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "stripe_account_id",
+                    "Varchar"
+                  ],
+                  [
+                    "company_name",
+                    "Varchar"
+                  ],
+                  [
+                    "contact_email",
+                    "Varchar"
+                  ],
+                  [
+                    "business_type",
+                    {
+                      "Custom": {
+                        "name": "business_type",
+                        "kind": {
+                          "Enum": [
+                            "individual",
+                            "company",
+                            "nonprofit",
+                            "government_entity"
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  [
+                    "asserted_nonprofit_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
         }
       ],
       "parameters": {
         "Left": [
           "Text",
+          "Timestamptz",
+          "Uuid",
           "Int8"
         ]
       },
       "nullable": [
-        false,
-        false,
-        false,
         true,
-        false,
-        false,
-        false,
-        false,
-        false,
         true
       ]
     }
@@ -1510,6 +1559,132 @@
       ]
     }
   },
+  "c076fe995c71de7be99edb496d4c11792be8bdad0578fafeb4da43ccd7bcc547": {
+    "query": "SELECT nonprofit AS \"nonprofit!: _\",\n  affiliate AS \"affiliate!: _\"\nFROM full_nonprofits\nWHERE (nonprofit).nonprofit_id = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit!: _",
+          "type_info": {
+            "Custom": {
+              "name": "nonprofits",
+              "kind": {
+                "Composite": [
+                  [
+                    "nonprofit_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "change_nonprofit_id",
+                    "Varchar"
+                  ],
+                  [
+                    "icon_url",
+                    "Varchar"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ],
+                  [
+                    "ein",
+                    "Varchar"
+                  ],
+                  [
+                    "mission",
+                    "Text"
+                  ],
+                  [
+                    "category",
+                    "Varchar"
+                  ],
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 1,
+          "name": "affiliate!: _",
+          "type_info": {
+            "Custom": {
+              "name": "affiliates",
+              "kind": {
+                "Composite": [
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "stripe_account_id",
+                    "Varchar"
+                  ],
+                  [
+                    "company_name",
+                    "Varchar"
+                  ],
+                  [
+                    "contact_email",
+                    "Varchar"
+                  ],
+                  [
+                    "business_type",
+                    {
+                      "Custom": {
+                        "name": "business_type",
+                        "kind": {
+                          "Enum": [
+                            "individual",
+                            "company",
+                            "nonprofit",
+                            "government_entity"
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  [
+                    "asserted_nonprofit_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        true,
+        true
+      ]
+    }
+  },
   "c9aebf65bd99c211386806ecbc0531a0bb5ae58373bcc8990d13e9bf9ade4070": {
     "query": "INSERT INTO users (\n    user_id,\n    create_time,\n    update_time,\n    firebase_uid,\n    firebase_email,\n    stripe_customer_id\n  )\nVALUES (DEFAULT, $1, $2, $3, $4, $5)\nRETURNING *",
     "describe": {
@@ -1611,6 +1786,151 @@
         false,
         false,
         false
+      ]
+    }
+  },
+  "e1acc48bc80bc8472484839efe1bdde9ed9edee3e3d8fdab9017f9c1d45e8e72": {
+    "query": "SELECT COUNT(*) AS \"count!\"\nFROM full_nonprofits",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count!",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
+  "e6db5a670851018b8dc882156d87830210b9866bd64a580ffa3317b3cdca37a4": {
+    "query": "SELECT nonprofit AS \"nonprofit!: _\",\n  affiliate AS \"affiliate!: _\"\nFROM full_nonprofits\nWHERE (nonprofit).name ILIKE CONCAT('%', $1::text, '%')\nORDER BY (nonprofit).create_time ASC,\n  (nonprofit).nonprofit_id ASC\nLIMIT $2",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "nonprofit!: _",
+          "type_info": {
+            "Custom": {
+              "name": "nonprofits",
+              "kind": {
+                "Composite": [
+                  [
+                    "nonprofit_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "change_nonprofit_id",
+                    "Varchar"
+                  ],
+                  [
+                    "icon_url",
+                    "Varchar"
+                  ],
+                  [
+                    "name",
+                    "Varchar"
+                  ],
+                  [
+                    "ein",
+                    "Varchar"
+                  ],
+                  [
+                    "mission",
+                    "Text"
+                  ],
+                  [
+                    "category",
+                    "Varchar"
+                  ],
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        {
+          "ordinal": 1,
+          "name": "affiliate!: _",
+          "type_info": {
+            "Custom": {
+              "name": "affiliates",
+              "kind": {
+                "Composite": [
+                  [
+                    "affiliate_id",
+                    "Uuid"
+                  ],
+                  [
+                    "create_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "update_time",
+                    "Timestamptz"
+                  ],
+                  [
+                    "stripe_account_id",
+                    "Varchar"
+                  ],
+                  [
+                    "company_name",
+                    "Varchar"
+                  ],
+                  [
+                    "contact_email",
+                    "Varchar"
+                  ],
+                  [
+                    "business_type",
+                    {
+                      "Custom": {
+                        "name": "business_type",
+                        "kind": {
+                          "Enum": [
+                            "individual",
+                            "company",
+                            "nonprofit",
+                            "government_entity"
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  [
+                    "asserted_nonprofit_id",
+                    "Uuid"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        true,
+        true
       ]
     }
   },

@@ -1,23 +1,23 @@
 use crate::protobuf::{from::ProtoFrom, into::IntoProto};
 use affect_api::affect::{Affiliate, AffiliateManager};
-use affect_storage::stores::affiliate::AffiliateFullRow;
+use affect_storage::stores::affiliate::FullAffiliateRow;
 use tonic::Status;
 
 // Same type name.
 use affect_api::affect::BusinessType as ProtoBusinessType;
 use affect_storage::stores::affiliate::BusinessType as StoreBusinessType;
 
-impl ProtoFrom<AffiliateFullRow> for Affiliate {
-    fn proto_from(affiliate_row: AffiliateFullRow) -> Result<Self, Status> {
-        let business_type: ProtoBusinessType = affiliate_row.business_type.into_proto()?;
+impl ProtoFrom<FullAffiliateRow> for Affiliate {
+    fn proto_from(value: FullAffiliateRow) -> Result<Self, Status> {
+        let business_type: ProtoBusinessType = value.affiliate.business_type.into_proto()?;
         Ok(Affiliate {
-            affiliate_id: affiliate_row.affiliate_id.into_proto()?,
-            create_time: Some(affiliate_row.create_time.into_proto()?),
-            update_time: Some(affiliate_row.update_time.into_proto()?),
-            company_name: affiliate_row.company_name,
-            contact_email: affiliate_row.contact_email,
+            affiliate_id: value.affiliate.affiliate_id.into_proto()?,
+            create_time: Some(value.affiliate.create_time.into_proto()?),
+            update_time: Some(value.affiliate.update_time.into_proto()?),
+            company_name: value.affiliate.company_name,
+            contact_email: value.affiliate.contact_email,
             business_type: business_type as i32,
-            managers: affiliate_row
+            managers: value
                 .affiliate_managers
                 .inner()
                 .into_iter()
@@ -27,7 +27,7 @@ impl ProtoFrom<AffiliateFullRow> for Affiliate {
                     };
                 })
                 .collect(),
-            asserted_nonprofit_id: affiliate_row.asserted_nonprofit_id.into_proto()?,
+            asserted_nonprofit_id: value.affiliate.asserted_nonprofit_id.into_proto()?,
         })
     }
 }

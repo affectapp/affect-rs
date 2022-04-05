@@ -108,7 +108,7 @@ mock! {
             page_size: i64,
             page_token: Option<CausePageToken>,
             user_id: Uuid,
-        ) -> Result<Vec<CauseFullRow>, affect_storage::Error>;
+        ) -> Result<Vec<FullCauseRow>, affect_storage::Error>;
 
         async fn count_causes_for_user(&self, user_id: Uuid) -> Result<i64, affect_storage::Error>;
 

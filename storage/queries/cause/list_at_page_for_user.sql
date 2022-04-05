@@ -1,10 +1,8 @@
-SELECT causes.*,
-  COALESCE(ARRAY_AGG(cause_recipients), '{}') AS "recipients!: _"
-FROM causes
-  JOIN cause_recipients USING (cause_id)
-WHERE (causes.create_time, causes.cause_id) >= ($1, $2)
-  AND causes.user_id = $3
-GROUP BY causes.cause_id
-ORDER BY causes.create_time ASC,
-  causes.cause_id ASC
+SELECT cause AS "cause!: _",
+  cause_recipients AS "cause_recipients!: _"
+FROM full_causes
+WHERE ((cause).create_time, (cause).cause_id) >= ($1, $2)
+  AND (cause).user_id = $3
+ORDER BY (cause).create_time ASC,
+  (cause).cause_id ASC
 LIMIT $4

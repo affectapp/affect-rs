@@ -4,7 +4,9 @@ use chrono::{DateTime, Utc};
 use sqlx::{postgres::PgTypeInfo, FromRow, PgExecutor, Postgres};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, FromRow, sqlx::Decode)]
+use super::nonprofit::NonprofitRow;
+
+#[derive(Clone, Debug, FromRow, PartialEq, sqlx::Decode)]
 pub struct AffiliateRow {
     pub affiliate_id: Uuid,
     pub create_time: DateTime<Utc>,
@@ -16,16 +18,16 @@ pub struct AffiliateRow {
     pub asserted_nonprofit_id: Uuid,
 }
 
+impl sqlx::Type<Postgres> for AffiliateRow {
+    fn type_info() -> PgTypeInfo {
+        PgTypeInfo::with_name("affiliates")
+    }
+}
+
 #[derive(Clone, Debug, FromRow)]
-pub struct AffiliateFullRow {
-    pub affiliate_id: Uuid,
-    pub create_time: DateTime<Utc>,
-    pub update_time: DateTime<Utc>,
-    pub stripe_account_id: String,
-    pub company_name: String,
-    pub contact_email: String,
-    pub business_type: BusinessType,
-    pub asserted_nonprofit_id: Uuid,
+pub struct FullAffiliateRow {
+    pub affiliate: AffiliateRow,
+    pub asserted_nonprofit: Option<NonprofitRow>,
     pub affiliate_managers: AffiliateManagerRowVec,
 }
 
@@ -71,7 +73,7 @@ impl sqlx::Type<Postgres> for AffiliateManagerRowVec {
     }
 }
 
-#[derive(Clone, Debug, sqlx::Type)]
+#[derive(Clone, Debug, PartialEq, sqlx::Type)]
 #[sqlx(type_name = "business_type", rename_all = "snake_case")]
 pub enum BusinessType {
     Individual,
@@ -87,7 +89,7 @@ pub trait AffiliateStore: Sync + Send {
     async fn find_affiliate_by_id(
         &self,
         affiliate_id: Uuid,
-    ) -> Result<Option<AffiliateFullRow>, Error>;
+    ) -> Result<Option<FullAffiliateRow>, Error>;
 
     async fn add_affiliate_manager(
         &self,
@@ -114,7 +116,7 @@ impl AffiliateStore for PgOnDemandStore {
     async fn find_affiliate_by_id(
         &self,
         affiliate_id: Uuid,
-    ) -> Result<Option<AffiliateFullRow>, Error> {
+    ) -> Result<Option<FullAffiliateRow>, Error> {
         Ok(find_affiliate_by_id(&*self.pool, affiliate_id).await?)
     }
 
@@ -150,7 +152,7 @@ impl<'a> AffiliateStore for PgTransactionalStore<'a> {
     async fn find_affiliate_by_id(
         &self,
         affiliate_id: Uuid,
-    ) -> Result<Option<AffiliateFullRow>, Error> {
+    ) -> Result<Option<FullAffiliateRow>, Error> {
         let mut lock = self.txn.lock().await;
         Ok(find_affiliate_by_id(&mut *lock, affiliate_id).await?)
     }
@@ -202,12 +204,12 @@ where
 async fn find_affiliate_by_id<'a, E>(
     executor: E,
     affiliate_id: Uuid,
-) -> Result<Option<AffiliateFullRow>, Error>
+) -> Result<Option<FullAffiliateRow>, Error>
 where
     E: PgExecutor<'a>,
 {
     Ok(sqlx::query_file_as!(
-        AffiliateFullRow,
+        FullAffiliateRow,
         "queries/affiliate/find_by_id.sql",
         affiliate_id
     )

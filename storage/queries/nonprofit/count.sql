@@ -1,2 +1,2 @@
-SELECT COUNT(*) AS count
-FROM nonprofits
+SELECT COUNT(*) AS "count!"
+FROM full_nonprofits

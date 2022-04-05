@@ -157,7 +157,7 @@ where
             .filter(|s| !s.is_empty())
             .ok_or(invalid_argument!("'affiliate_id' must be specified"))?;
 
-        let affiliate_row = match self
+        let full_affiliate_row = match self
             .database
             .on_demand()
             .find_affiliate_by_id(
@@ -167,13 +167,14 @@ where
             )
             .await?
         {
-            Some(affiliate_row) => affiliate_row,
+            Some(row) => row,
             None => {
                 return Err(not_found!("affiliate not found"));
             }
         };
 
-        let stripe_account_id = affiliate_row
+        let stripe_account_id = full_affiliate_row
+            .affiliate
             .stripe_account_id
             .parse::<stripe::AccountId>()
             .map_err(|e| internal!("failed to parse stripe account id: {:?}", e))?;
@@ -192,11 +193,11 @@ where
                         expand: &[],
                         refresh_url: Some(&format!(
                             "https://web.affect.app/#/affiliate/{}/stripe/onboarding",
-                            affiliate_row.affiliate_id.to_string()
+                            full_affiliate_row.affiliate.affiliate_id.to_string()
                         )),
                         return_url: Some(&format!(
                             "https://web.affect.app/#/affiliate/{}/stripe/return",
-                            affiliate_row.affiliate_id.to_string(),
+                            full_affiliate_row.affiliate.affiliate_id.to_string(),
                         )),
                     },
                 )
@@ -216,7 +217,7 @@ where
                     &stripe_account_id,
                     &format!(
                         "https://web.affect.app/#/affiliate/{}/stripe/return",
-                        affiliate_row.affiliate_id.to_string(),
+                        full_affiliate_row.affiliate.affiliate_id.to_string(),
                     ),
                 )
                 .await
@@ -242,7 +243,7 @@ where
             .filter(|s| !s.is_empty())
             .ok_or(invalid_argument!("'affiliate_id' must be specified"))?;
 
-        let affiliate_row = match self
+        let full_affiliate_row = match self
             .database
             .on_demand()
             .find_affiliate_by_id(
@@ -252,13 +253,14 @@ where
             )
             .await?
         {
-            Some(affiliate_row) => affiliate_row,
+            Some(row) => row,
             None => {
                 return Err(not_found!("affiliate not found"));
             }
         };
 
-        let stripe_account_id = affiliate_row
+        let stripe_account_id = full_affiliate_row
+            .affiliate
             .stripe_account_id
             .parse::<stripe::AccountId>()
             .map_err(|e| internal!("failed to parse stripe account id: {:?}", e))?;
@@ -273,6 +275,6 @@ where
         let country = stripe_account.country;
         let business_name = stripe_account.business_profile.map(|p| p.name).flatten();
 
-        Ok(Response::new(affiliate_row.into_proto()?))
+        Ok(Response::new(full_affiliate_row.into_proto()?))
     }
 }

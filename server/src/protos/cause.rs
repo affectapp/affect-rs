@@ -1,6 +1,6 @@
 use crate::protobuf::from::ProtoFrom;
 use affect_api::affect::{Cause, CauseRecipient};
-use affect_storage::stores::cause::{CauseFullRow, CauseRecipientRow, CauseRow};
+use affect_storage::stores::cause::{CauseRecipientRow, CauseRow, FullCauseRow};
 use prost_types::Timestamp;
 use tonic::Status;
 
@@ -23,15 +23,15 @@ impl ProtoFrom<(CauseRow, Vec<CauseRecipientRow>)> for Cause {
     }
 }
 
-impl ProtoFrom<CauseFullRow> for Cause {
-    fn proto_from(value: CauseFullRow) -> Result<Self, Status> {
+impl ProtoFrom<FullCauseRow> for Cause {
+    fn proto_from(value: FullCauseRow) -> Result<Self, Status> {
         Ok(Cause {
-            cause_id: value.cause_id.to_string(),
-            create_time: Some(Timestamp::proto_from(value.create_time)?),
-            update_time: Some(Timestamp::proto_from(value.update_time)?),
-            user_id: value.user_id.to_string(),
+            cause_id: value.cause.cause_id.to_string(),
+            create_time: Some(Timestamp::proto_from(value.cause.create_time)?),
+            update_time: Some(Timestamp::proto_from(value.cause.update_time)?),
+            user_id: value.cause.user_id.to_string(),
             recipients: value
-                .recipients
+                .cause_recipients
                 .inner()
                 .into_iter()
                 .map(|cause_recipient_row| CauseRecipient {
