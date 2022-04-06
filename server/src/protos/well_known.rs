@@ -8,7 +8,7 @@ use uuid::Uuid;
 impl FromProto<String> for Uuid {
     fn from_proto(proto: String) -> Result<Self, Status> {
         Ok(Uuid::parse_str(&proto)
-            .map_err(|e| invalid_argument!("could not parse uuid: {:?}", e))?)
+            .map_err(|e| invalid_argument!("could not parse as uuid: {:?}", e))?)
     }
 }
 

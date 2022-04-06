@@ -1,9 +1,9 @@
-use crate::protobuf::into::IntoProto;
+use crate::protobuf::into::{IntoProto, ProtoInto};
 use affect_api::affect::{
     affiliate_service_server::AffiliateService, Affiliate, AffiliateLink, AffiliateLinkType,
     BusinessType, CreateAffiliateRequest, GenerateAffiliateLinkRequest, RefreshAffiliateRequest,
 };
-use affect_status::{internal, invalid_argument, not_found, Status};
+use affect_status::{internal, invalid_argument, not_found, well_known::UnwrapField, Status};
 use affect_storage::{
     database::client::DatabaseClient,
     database::store::{OnDemandStore, TransactionalStore},
@@ -14,7 +14,6 @@ use chrono::{TimeZone, Utc};
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tonic::{Request, Response};
-use uuid::Uuid;
 
 use affect_storage::stores::affiliate::BusinessType as StoreBusinessType;
 
@@ -48,27 +47,22 @@ where
     ) -> Result<Response<Affiliate>, Status> {
         let message = request.into_inner();
 
-        let user_id = Some(message.user_id.clone())
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'user_id' must be specified"))?
-            .parse::<Uuid>()
-            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+        let user_id = message
+            .user_id
+            .clone()
+            .unwrap_field("user_id")?
+            .proto_field_into("user_id")?;
+        let company_name = message.company_name.clone().unwrap_field("company_name")?;
+        let contact_email = message
+            .contact_email
+            .clone()
+            .unwrap_field("contact_email")?;
 
-        let company_name = Some(message.company_name.to_string())
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'company_name' must be specified"))?;
-
-        let contact_email = Some(message.contact_email.to_string())
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'contact_email' must be specified"))?;
-
-        let asserted_nonprofit_id = Some(message.asserted_nonprofit_id.clone())
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!(
-                "'asserted_nonprofit_id' must be specified"
-            ))?
-            .parse::<Uuid>()
-            .map_err(|e| invalid_argument!("'asserted_nonprofit_id' is invalid: {:?}", e))?;
+        let asserted_nonprofit_id = message
+            .asserted_nonprofit_id
+            .clone()
+            .unwrap_field("asserted_nonprofit_id")?
+            .proto_field_into("asserted_nonprofit_id")?;
 
         let stripe_business_type = match message.business_type() {
             BusinessType::Unspecified => {
@@ -153,18 +147,16 @@ where
         request: Request<GenerateAffiliateLinkRequest>,
     ) -> Result<Response<AffiliateLink>, Status> {
         let message = request.into_inner();
-        let affiliate_id = Some(message.affiliate_id.to_string())
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'affiliate_id' must be specified"))?;
+        let affiliate_id = message
+            .affiliate_id
+            .to_string()
+            .unwrap_field("affiliate_id")?
+            .proto_field_into("affiliate_id")?;
 
         let full_affiliate_row = match self
             .database
             .on_demand()
-            .find_affiliate_by_id(
-                affiliate_id
-                    .parse()
-                    .map_err(|e| invalid_argument!("'affiliate_id' is invalid: {:?}", e))?,
-            )
+            .find_affiliate_by_id(affiliate_id)
             .await?
         {
             Some(row) => row,
@@ -239,18 +231,15 @@ where
         request: Request<RefreshAffiliateRequest>,
     ) -> Result<Response<Affiliate>, Status> {
         let message = request.into_inner();
-        let affiliate_id = Some(message.affiliate_id.to_string())
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'affiliate_id' must be specified"))?;
+        let affiliate_id = message
+            .affiliate_id
+            .unwrap_field("affiliate_id")?
+            .proto_field_into("affiliate_id")?;
 
         let full_affiliate_row = match self
             .database
             .on_demand()
-            .find_affiliate_by_id(
-                affiliate_id
-                    .parse()
-                    .map_err(|e| invalid_argument!("'affiliate_id' is invalid: {:?}", e))?,
-            )
+            .find_affiliate_by_id(affiliate_id)
             .await?
         {
             Some(row) => row,

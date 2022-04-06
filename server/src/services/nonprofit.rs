@@ -1,9 +1,9 @@
-use crate::protobuf::into::IntoProto;
+use crate::protobuf::into::{IntoProto, ProtoInto};
 use affect_api::affect::{
     list_nonprofits_request::Filter, nonprofit_service_server::NonprofitService,
     ListNonprofitsRequest, *,
 };
-use affect_status::{invalid_argument, not_found};
+use affect_status::{invalid_argument, not_found, well_known::UnwrapField};
 use affect_storage::{
     database::{
         client::DatabaseClient,
@@ -22,7 +22,6 @@ use std::{
     sync::Arc,
 };
 use tonic::{Request, Response, Status};
-use uuid::Uuid;
 
 pub struct NonprofitServiceImpl<Db, Store, TStore> {
     database: Arc<Db>,
@@ -54,8 +53,8 @@ where
 
         let nonprofit_id = message
             .nonprofit_id
-            .parse::<Uuid>()
-            .map_err(|e| invalid_argument!("'nonprofit_id' is invalid: {:?}", e))?;
+            .unwrap_field("nonprofit_id")?
+            .proto_field_into("nonprofit_id")?;
 
         let full_nonprofit_row = self
             .database

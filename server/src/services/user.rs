@@ -1,6 +1,6 @@
 use crate::{firebase::FirebaseAuth, protobuf::into::IntoProto};
 use affect_api::affect::{get_user_request::Identifier, user_service_server::UserService, *};
-use affect_status::{internal, invalid_argument, not_found};
+use affect_status::{internal, invalid_argument, not_found, well_known::UnwrapField};
 use affect_storage::stores::user::{NewUserRow, UserStore};
 use async_trait::async_trait;
 use chrono::Utc;
@@ -32,9 +32,13 @@ impl UserService for UserServiceImpl {
     async fn create_user(&self, req: Request<CreateUserRequest>) -> Result<Response<User>, Status> {
         let message = req.into_inner();
 
+        let firebase_id_token = message
+            .firebase_id_token
+            .unwrap_field("firebase_id_token")?;
+
         let decoded_id_token = self
             .firebase_auth
-            .verify_id_token(message.firebase_id_token)
+            .verify_id_token(firebase_id_token)
             .map_err(|e| invalid_argument!("firebase id token verification failed: {:?}", e))?;
         let now = Utc::now();
 

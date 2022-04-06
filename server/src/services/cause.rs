@@ -1,9 +1,9 @@
-use crate::protobuf::into::IntoProto;
+use crate::protobuf::into::{IntoProto, ProtoInto};
 use affect_api::affect::{
     cause_service_server::CauseService, Cause, CreateCauseRequest, ListCausesRequest,
     ListCausesResponse,
 };
-use affect_status::{invalid_argument, well_known::invalid_field};
+use affect_status::{invalid_argument, well_known::UnwrapField};
 use affect_storage::{
     database::{
         client::DatabaseClient,
@@ -19,7 +19,6 @@ use std::{
     sync::Arc,
 };
 use tonic::{Request, Response, Status};
-use uuid::Uuid;
 
 pub struct CauseServiceImpl<Db, Store, TStore> {
     database: Arc<Db>,
@@ -50,16 +49,16 @@ where
 
         let user_id = message
             .user_id
-            .parse::<Uuid>()
-            .map_err(|e| invalid_field("user_id", e))?;
+            .unwrap_field("user_id")?
+            .proto_field_into("user_id")?;
 
         let mut recipient_nonprofit_ids = Vec::new();
         for recipient in message.recipients {
             recipient_nonprofit_ids.push(
                 recipient
                     .nonprofit_id
-                    .parse::<Uuid>()
-                    .map_err(|e| invalid_argument!("'nonprofit_id' is invalid: {:?}", e))?,
+                    .unwrap_field("nonprofit_id")?
+                    .proto_field_into("nonprofit_id")?,
             );
         }
 
@@ -83,11 +82,10 @@ where
         let page_size = min(max(message.page_size, 1), 100);
         let page_token = CausePageToken::deserialize_page_token(&message.page_token)
             .map_err(|e| invalid_argument!("'page_token' is invalid: {:?}", e))?;
-        let user_id = Some(message.user_id)
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'user_id' must be specified"))?
-            .parse::<Uuid>()
-            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+        let user_id = message
+            .user_id
+            .unwrap_field("user_id")?
+            .proto_field_into("user_id")?;
 
         let (rows_plus_one, total_count) = self
             .database

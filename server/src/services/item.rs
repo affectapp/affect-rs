@@ -1,8 +1,9 @@
-use crate::protobuf::into::IntoProto;
+use crate::protobuf::into::{IntoProto, ProtoInto};
 use affect_api::affect::{
     item_service_server::ItemService, CreateItemRequest, DeleteItemRequest,
     GenerateLinkTokenRequest, Item, LinkToken, ListItemsRequest, ListItemsResponse,
 };
+use affect_status::well_known::UnwrapField;
 use affect_status::{internal, invalid_argument, not_found};
 use affect_storage::database::client::DatabaseClient;
 use affect_storage::database::store::{OnDemandStore, TransactionalStore};
@@ -72,8 +73,8 @@ where
         let message = request.into_inner();
         let user_id = message
             .user_id
-            .parse()
-            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+            .unwrap_field("user_id")?
+            .proto_field_into("user_id")?;
         let user_row = self
             .database
             .on_demand()
@@ -120,8 +121,8 @@ where
         let message = request.into_inner();
         let user_id = message
             .user_id
-            .parse()
-            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+            .unwrap_field("user_id")?
+            .proto_field_into("user_id")?;
         let user_row = self
             .database
             .on_demand()
@@ -221,11 +222,10 @@ where
         let page_size = min(max(message.page_size, 1), 100);
         let page_token = ItemPageToken::deserialize_page_token(&message.page_token)
             .map_err(|e| invalid_argument!("'page_token' is invalid: {:?}", e))?;
-        let user_id = Some(message.user_id)
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'user_id' must be specified"))?
-            .parse::<Uuid>()
-            .map_err(|e| invalid_argument!("'user_id' is invalid: {:?}", e))?;
+        let user_id = message
+            .user_id
+            .unwrap_field("user_id")?
+            .proto_field_into("user_id")?;
 
         let (rows_plus_one, total_count) = self
             .database
@@ -265,11 +265,10 @@ where
         request: Request<DeleteItemRequest>,
     ) -> Result<Response<()>, Status> {
         let message = request.into_inner();
-        let item_id = Some(message.item_id)
-            .filter(|s| !s.is_empty())
-            .ok_or(invalid_argument!("'item_id' must be specified"))?
-            .parse::<Uuid>()
-            .map_err(|e| invalid_argument!("'item_id' is invalid: {:?}", e))?;
+        let item_id = message
+            .item_id
+            .unwrap_field("item_id")?
+            .proto_field_into("item_id")?;
 
         let store = self.database.begin().await?;
         let item = store

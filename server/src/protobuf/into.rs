@@ -17,8 +17,13 @@ where
     }
 }
 
-pub trait ProtoInto<T> {
+pub trait ProtoInto<T>
+where
+    Self: Sized,
+{
     fn proto_into(self) -> Result<T, Status>;
+
+    fn proto_field_into(self, field_name: &str) -> Result<T, Status>;
 }
 
 impl<P, T> ProtoInto<T> for P
@@ -27,5 +32,9 @@ where
 {
     fn proto_into(self) -> Result<T, Status> {
         T::from_proto(self)
+    }
+
+    fn proto_field_into(self, field_name: &str) -> Result<T, Status> {
+        T::from_proto_field(self, field_name)
     }
 }
