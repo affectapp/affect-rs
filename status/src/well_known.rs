@@ -31,7 +31,3 @@ impl UnwrapField<String> for String {
         Ok(self)
     }
 }
-
-pub trait ParseField<To> {
-    fn parse_field(self, field_name: &str) -> Result<To, Status>;
-}

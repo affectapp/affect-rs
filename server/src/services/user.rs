@@ -1,10 +1,19 @@
-use crate::{firebase::FirebaseAuth, protobuf::into::IntoProto};
+use crate::{
+    firebase::FirebaseAuth,
+    protobuf::into::{IntoProto, ProtoInto},
+};
 use affect_api::affect::{get_user_request::Identifier, user_service_server::UserService, *};
 use affect_status::{internal, invalid_argument, not_found, well_known::UnwrapField};
-use affect_storage::stores::user::{NewUserRow, UserStore};
+use affect_storage::{
+    page_token::{PageToken, PageTokenable},
+    stores::user::{NewUserRow, UserPageToken, UserStore},
+};
 use async_trait::async_trait;
 use chrono::Utc;
-use std::sync::Arc;
+use std::{
+    cmp::{max, min},
+    sync::Arc,
+};
 use tonic::{Request, Response, Status};
 
 pub struct UserServiceImpl {
@@ -68,13 +77,18 @@ impl UserService for UserServiceImpl {
     async fn get_user(&self, req: Request<GetUserRequest>) -> Result<Response<User>, Status> {
         let message = req.into_inner();
         let user_row = match message.identifier {
-            Some(Identifier::FirebaseUserId(firebase_user_id)) => Ok(self
-                .user_store
-                .find_user_by_firebase_uid(firebase_user_id)
-                .await?),
-            Some(Identifier::UserId(_)) => todo!(),
-            None => Err(invalid_argument!("must specify identifier")),
-        }?
+            Some(Identifier::FirebaseUserId(firebase_user_id)) => {
+                self.user_store
+                    .find_user_by_firebase_uid(firebase_user_id)
+                    .await?
+            }
+            Some(Identifier::UserId(user_id)) => {
+                self.user_store
+                    .find_user_by_id(user_id.proto_field_into("user_id")?)
+                    .await?
+            }
+            None => return Err(invalid_argument!("must specify identifier")),
+        }
         .ok_or(not_found!("user not found"))?;
 
         Ok(Response::new(user_row.into_proto()?))
@@ -82,8 +96,39 @@ impl UserService for UserServiceImpl {
 
     async fn list_users(
         &self,
-        _: Request<ListUsersRequest>,
+        request: Request<ListUsersRequest>,
     ) -> Result<Response<ListUsersResponse>, Status> {
-        todo!()
+        let message = request.into_inner();
+
+        let page_size = min(max(message.page_size, 1), 100);
+        let limit: i64 = (page_size + 1).into();
+        let page_token = UserPageToken::deserialize_page_token(&message.page_token)
+            .map_err(|e| invalid_argument!("'page_token' is invalid: {:?}", e))?;
+
+        let (rows_plus_one, total_count) = self
+            .user_store
+            .list_and_count_users(limit, page_token)
+            .await?;
+
+        let (page_rows, next_page_rows) =
+            rows_plus_one.split_at(min(rows_plus_one.len(), page_size as usize));
+
+        // Map rows to protos and serialize page token.
+        let mut users: Vec<User> = Vec::new();
+        for row in page_rows {
+            users.push(row.clone().into_proto()?);
+        }
+
+        // Next page token or empty string.
+        let next_page_token = next_page_rows
+            .first()
+            .map(|next_row| next_row.page_token().serialize_page_token())
+            .unwrap_or(Ok("".to_string()))?;
+
+        Ok(Response::new(ListUsersResponse {
+            users,
+            next_page_token,
+            total_count,
+        }))
     }
 }

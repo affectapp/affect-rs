@@ -597,6 +597,56 @@
       ]
     }
   },
+  "3beda4b1668c224f57f3e363e7e54cd2a8cfd7c94b4a621226c7dab59b08bce1": {
+    "query": "SELECT *\nFROM users\nORDER BY create_time ASC,\n  user_id ASC\nLIMIT $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "firebase_uid",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "firebase_email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "stripe_customer_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "4b194bbdca7f56c10caf38157225ad836411cbaa4c3cf84e2012debf8bbc5800": {
     "query": "SELECT *\nFROM items\nWHERE item_id = $1",
     "describe": {
@@ -644,6 +694,24 @@
         false,
         false,
         false
+      ]
+    }
+  },
+  "4e7e09e767cf63624e6f5320ba0e98fca12a8701a892b3c4264f9ae6391456ce": {
+    "query": "SELECT COUNT(*) AS \"count!\"\nFROM users",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count!",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null
       ]
     }
   },
@@ -1348,6 +1416,58 @@
         "Left": [
           "Int8",
           "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "9ac3f9bd14549279115c306f7d15fa084dd3f3b51fc2b3119fde6a33e16a3f7d": {
+    "query": "SELECT *\nFROM users\nWHERE (create_time, user_id) >= ($1, $2)\nORDER BY create_time ASC,\n  user_id ASC\nLIMIT $3",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "user_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "create_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 2,
+          "name": "update_time",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "firebase_uid",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "firebase_email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "stripe_customer_id",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Uuid",
+          "Int8"
         ]
       },
       "nullable": [
