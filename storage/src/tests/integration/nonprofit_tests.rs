@@ -1,15 +1,13 @@
-use affect_storage::{database::client::DatabaseClient, stores::nonprofit::*};
+use crate::{
+    database::client::DatabaseClient, stores::nonprofit::*,
+    tests::integration::containers::PgContainer,
+};
 use chrono::{TimeZone, Utc};
-use testcontainers::clients::Cli;
 use uuid::Uuid;
-
-mod common;
 
 #[tokio::test]
 async fn create_nonprofit() -> Result<(), anyhow::Error> {
-    let docker = Cli::default();
-    let container = common::setup_pg_container(&docker).await?;
-    let store = container.pool.on_demand();
+    let container = PgContainer::start().await?;
 
     let mut expected_nonprofit = NonprofitRow {
         nonprofit_id: Uuid::new_v4(),
@@ -25,6 +23,7 @@ async fn create_nonprofit() -> Result<(), anyhow::Error> {
     };
 
     // Insert nonprofit.
+    let store = container.pool.on_demand();
     let nonprofit = store
         .add_nonprofit(NewNonprofitRow {
             create_time: expected_nonprofit.create_time.clone(),
@@ -48,9 +47,7 @@ async fn create_nonprofit() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn find_nonprofit_by_id_exists() -> Result<(), anyhow::Error> {
-    let docker = Cli::default();
-    let container = common::setup_pg_container(&docker).await?;
-    let store = container.pool.on_demand();
+    let container = PgContainer::start().await?;
 
     // Seed database with nonprofit
     let mut expected_nonprofit = NonprofitRow {
@@ -65,6 +62,7 @@ async fn find_nonprofit_by_id_exists() -> Result<(), anyhow::Error> {
         category: "category".to_string(),
         affiliate_id: None,
     };
+    let store = container.pool.on_demand();
     let inserted_nonprofit = store
         .add_nonprofit(NewNonprofitRow {
             create_time: expected_nonprofit.create_time.clone(),
@@ -96,8 +94,7 @@ async fn find_nonprofit_by_id_exists() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn find_nonprofit_by_id_none() -> Result<(), anyhow::Error> {
-    let docker = Cli::default();
-    let container = common::setup_pg_container(&docker).await?;
+    let container = PgContainer::start().await?;
     let store = container.pool.on_demand();
 
     assert_eq!(store.find_nonprofit_by_id(Uuid::new_v4()).await?, None);

@@ -1,4 +1,4 @@
-use affect_storage::sqlx::client::PgDatabaseClient;
+use crate::sqlx::client::PgDatabaseClient;
 use anyhow::Context;
 use testcontainers::{
     clients::Cli,

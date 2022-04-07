@@ -18,7 +18,7 @@ impl PgDatabaseClient {
     pub async fn connect(postgres_uri: String) -> Result<Self, Error> {
         let inner = PgPoolOptions::new()
             .max_connections(1)
-            .connect_timeout(Duration::from_secs(5))
+            .connect_timeout(Duration::from_secs(10))
             .connect(&postgres_uri)
             .await?;
         Ok(Self {

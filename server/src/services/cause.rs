@@ -22,7 +22,7 @@ use tonic::{Request, Response, Status};
 
 pub struct CauseServiceImpl<Db, Store, TStore> {
     database: Arc<Db>,
-    _marker: PhantomData<fn() -> (Store, TStore)>,
+    _marker: PhantomData<(Store, TStore)>,
 }
 
 impl<Db, Store, TStore> CauseServiceImpl<Db, Store, TStore> {

@@ -27,29 +27,15 @@ use std::{
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-pub struct ItemServiceImpl<Client, Store, TStore>
-where
-    Client: DatabaseClient<Store, TStore>,
-    Store: ItemStore + AccountStore + UserStore + OnDemandStore,
-    TStore: ItemStore + AccountStore + TransactionalStore,
-{
-    database: Arc<Client>,
+pub struct ItemServiceImpl<Db, Store, TStore> {
+    database: Arc<Db>,
     plaid: Arc<plaid::Client>,
     stripe: Arc<stripe::Client>,
-    _marker: PhantomData<fn() -> (Store, TStore)>,
+    _marker: PhantomData<(Store, TStore)>,
 }
 
-impl<Client, Store, TStore> ItemServiceImpl<Client, Store, TStore>
-where
-    Client: DatabaseClient<Store, TStore>,
-    Store: ItemStore + AccountStore + UserStore + OnDemandStore,
-    TStore: ItemStore + AccountStore + TransactionalStore,
-{
-    pub fn new(
-        database: Arc<Client>,
-        plaid: Arc<plaid::Client>,
-        stripe: Arc<stripe::Client>,
-    ) -> Self {
+impl<Db, Store, TStore> ItemServiceImpl<Db, Store, TStore> {
+    pub fn new(database: Arc<Db>, plaid: Arc<plaid::Client>, stripe: Arc<stripe::Client>) -> Self {
         Self {
             database,
             plaid,
@@ -60,9 +46,9 @@ where
 }
 
 #[async_trait]
-impl<Client, Store, TStore> ItemService for ItemServiceImpl<Client, Store, TStore>
+impl<Db, Store, TStore> ItemService for ItemServiceImpl<Db, Store, TStore>
 where
-    Client: DatabaseClient<Store, TStore> + 'static,
+    Db: DatabaseClient<Store, TStore> + 'static,
     Store: ItemStore + AccountStore + UserStore + OnDemandStore + 'static,
     TStore: ItemStore + AccountStore + TransactionalStore + 'static,
 {

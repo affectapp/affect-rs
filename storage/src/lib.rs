@@ -3,6 +3,9 @@ pub mod page_token;
 pub mod sqlx;
 pub mod stores;
 
+#[cfg(test)]
+pub mod tests;
+
 // Necessary since module has same name as the lib.
 extern crate sqlx as sqlx_lib;
 

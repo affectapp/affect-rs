@@ -50,8 +50,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let database = Arc::new(PgDatabaseClient::connect(config.postgres.uri).await?);
     let store = Arc::new(database.on_demand());
 
-    info!("Running migrations (if any)");
-    database.run_migrations().await?;
+    // info!("Running migrations (if any)");
+    // database.run_migrations().await?;
 
     // Dependencies:
     let firebase_auth =

@@ -258,11 +258,11 @@ where
             .await
             .map_err(|e| internal!("failed to retrieve stripe account: {:?}", e))?;
 
-        let payouts_enabled = stripe_account
+        let _payouts_enabled = stripe_account
             .payouts_enabled
             .ok_or(internal!("expected stripe account 'payouts_enabled' field"))?;
-        let country = stripe_account.country;
-        let business_name = stripe_account.business_profile.map(|p| p.name).flatten();
+        let _country = stripe_account.country;
+        let _business_name = stripe_account.business_profile.map(|p| p.name).flatten();
 
         Ok(Response::new(full_affiliate_row.into_proto()?))
     }
