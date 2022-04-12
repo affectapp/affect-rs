@@ -1,19 +1,12 @@
+use crate::services::cause::CauseServiceImpl;
 use affect_api::affect::{
     cause_service_client::CauseServiceClient, cause_service_server::CauseServiceServer,
     CauseRecipient, CreateCauseRequest,
 };
-use affect_server::services::cause::CauseServiceImpl;
-use affect_storage::{
-    database::{
-        client::DatabaseClient,
-        store::{OnDemandStore, TransactionalStore},
-    },
-    models::cause::*,
-    stores::cause::*,
-};
-use async_trait::async_trait;
+use affect_storage::models::cause::*;
+use affect_storage_mocks::*;
 use chrono::Utc;
-use mockall::{mock, Sequence};
+use mockall::Sequence;
 use std::sync::Arc;
 use std::time::Duration;
 use tonic::{transport::Server, Request};
@@ -84,54 +77,4 @@ async fn create_cause() -> Result<(), anyhow::Error> {
 
     server.abort();
     Ok(())
-}
-
-mock! {
-    pub DatabaseClient {}
-
-    #[async_trait]
-    impl DatabaseClient<MockStore, MockStore> for DatabaseClient {
-        fn on_demand(&self) -> MockStore;
-
-        async fn begin(&self) -> Result<MockStore, affect_storage::Error>;
-    }
-}
-
-mock! {
-    pub Store {}
-
-    #[async_trait]
-    impl CauseStore for Store {
-        async fn add_cause(&self, new_row: NewCauseRow) -> Result<CauseRow, affect_storage::Error>;
-
-        async fn list_causes_for_user(
-            &self,
-            page_size: i64,
-            page_token: Option<CausePageToken>,
-            user_id: Uuid,
-        ) -> Result<Vec<FullCauseRow>, affect_storage::Error>;
-
-        async fn count_causes_for_user(&self, user_id: Uuid) -> Result<i64, affect_storage::Error>;
-
-        async fn add_cause_recipient(
-            &self,
-            new_row: NewCauseRecipientRow,
-        ) -> Result<CauseRecipientRow, affect_storage::Error>;
-
-        async fn list_cause_recipients_for_cause(
-            &self,
-            cause_id: Uuid,
-        ) -> Result<Vec<CauseRecipientRow>, affect_storage::Error>;
-    }
-
-    #[async_trait]
-    impl OnDemandStore for Store {
-    }
-
-    #[async_trait]
-    impl TransactionalStore for Store {
-        async fn commit(self) -> Result<(), affect_storage::Error>;
-
-        async fn rollback(self) -> Result<(), affect_storage::Error>;
-    }
 }

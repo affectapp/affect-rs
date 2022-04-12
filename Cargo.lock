@@ -80,6 +80,7 @@ dependencies = [
  "affect-api",
  "affect-status",
  "affect-storage",
+ "affect-storage-mocks",
  "anyhow",
  "async-stripe",
  "async-trait",
@@ -133,6 +134,16 @@ dependencies = [
  "testcontainers",
  "thiserror",
  "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "affect-storage-mocks"
+version = "0.1.0"
+dependencies = [
+ "affect-storage",
+ "async-trait",
+ "mockall",
  "uuid",
 ]
 

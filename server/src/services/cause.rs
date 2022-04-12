@@ -21,6 +21,9 @@ use std::{
 };
 use tonic::{Request, Response, Status};
 
+#[cfg(test)]
+mod tests;
+
 pub struct CauseServiceImpl<Db, Store, TStore> {
     database: Arc<Db>,
     _marker: PhantomData<(Store, TStore)>,
