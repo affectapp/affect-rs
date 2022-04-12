@@ -1,6 +1,8 @@
-use crate::stores::account::AccountStore;
-use crate::stores::item::ItemStore;
-use crate::{database::store::TransactionalStore, Error};
+use crate::{
+    database::store::TransactionalStore,
+    stores::{account::AccountStore, item::ItemStore},
+    Error,
+};
 use async_trait::async_trait;
 use uuid::Uuid;
 

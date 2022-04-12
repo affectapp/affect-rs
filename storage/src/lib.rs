@@ -1,4 +1,5 @@
 pub mod database;
+pub mod models;
 pub mod page_token;
 pub mod sqlx;
 pub mod stores;

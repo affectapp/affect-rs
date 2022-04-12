@@ -1,48 +1,11 @@
-use crate::sqlx::store::PgTransactionalStore;
-use crate::{page_token::PageTokenable, sqlx::store::PgOnDemandStore, Error};
+use crate::{
+    models::item::*,
+    sqlx::store::{PgOnDemandStore, PgTransactionalStore},
+    Error,
+};
 use async_trait::async_trait;
-use chrono::serde::ts_nanoseconds;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use sqlx::PgExecutor;
 use uuid::Uuid;
-
-#[derive(Clone, Debug, FromRow, sqlx::Decode)]
-pub struct ItemRow {
-    pub item_id: Uuid,
-    pub create_time: DateTime<Utc>,
-    pub update_time: DateTime<Utc>,
-    pub user_id: Uuid,
-    pub plaid_item_id: String,
-    pub plaid_access_token: String,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct NewItemRow {
-    pub create_time: DateTime<Utc>,
-    pub update_time: DateTime<Utc>,
-    pub user_id: Uuid,
-    pub plaid_item_id: String,
-    pub plaid_access_token: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ItemPageToken {
-    #[serde(with = "ts_nanoseconds")]
-    pub create_time: DateTime<Utc>,
-
-    pub item_id: Uuid,
-}
-
-impl PageTokenable<ItemPageToken> for ItemRow {
-    fn page_token(&self) -> ItemPageToken {
-        ItemPageToken {
-            create_time: self.create_time.clone(),
-            item_id: self.item_id.clone(),
-        }
-    }
-}
 
 #[async_trait]
 pub trait ItemStore: Sync + Send {

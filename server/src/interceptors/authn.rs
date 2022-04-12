@@ -1,6 +1,6 @@
 use crate::{firebase::FirebaseAuth, tonic::async_interceptor::AsyncInterceptor};
 use affect_api::affect::{auth_metadata::PeerToken, AuthMetadata};
-use affect_storage::stores::user::{UserRow, UserStore};
+use affect_storage::{models::user::UserRow, stores::user::UserStore};
 use async_trait::async_trait;
 use hyper::{Body, Request};
 use log::debug;

@@ -10,11 +10,10 @@ use affect_storage::database::store::{OnDemandStore, TransactionalStore};
 use affect_storage::stores::item_and_account::ItemAndAccountStore;
 use affect_storage::stores::user::UserStore;
 use affect_storage::{
+    models::account::*,
+    models::item::*,
     page_token::{PageToken, PageTokenable},
-    stores::{
-        account::{AccountStore, NewAccountRow},
-        item::{ItemPageToken, ItemStore, NewItemRow},
-    },
+    stores::{account::AccountStore, item::ItemStore},
 };
 use async_trait::async_trait;
 use chrono::Utc;

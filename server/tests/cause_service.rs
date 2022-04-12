@@ -8,6 +8,7 @@ use affect_storage::{
         client::DatabaseClient,
         store::{OnDemandStore, TransactionalStore},
     },
+    models::cause::*,
     stores::cause::*,
 };
 use async_trait::async_trait;

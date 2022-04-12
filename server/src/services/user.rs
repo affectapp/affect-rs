@@ -5,8 +5,9 @@ use crate::{
 use affect_api::affect::{get_user_request::Identifier, user_service_server::UserService, *};
 use affect_status::{internal, invalid_argument, not_found, well_known::UnwrapField};
 use affect_storage::{
+    models::user::*,
     page_token::{PageToken, PageTokenable},
-    stores::user::{NewUserRow, UserPageToken, UserStore},
+    stores::user::UserStore,
 };
 use async_trait::async_trait;
 use chrono::Utc;

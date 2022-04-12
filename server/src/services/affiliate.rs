@@ -7,7 +7,8 @@ use affect_status::{internal, invalid_argument, not_found, well_known::UnwrapFie
 use affect_storage::{
     database::client::DatabaseClient,
     database::store::{OnDemandStore, TransactionalStore},
-    stores::affiliate::{AffiliateStore, NewAffiliateManagerRow, NewAffiliateRow},
+    models::affiliate::*,
+    stores::affiliate::AffiliateStore,
 };
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
@@ -15,7 +16,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tonic::{Request, Response};
 
-use affect_storage::stores::affiliate::BusinessType as StoreBusinessType;
+use affect_storage::models::affiliate::BusinessType as StoreBusinessType;
 
 pub struct AffiliateServiceImpl<Db, Store, TStore> {
     database: Arc<Db>,

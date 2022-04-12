@@ -9,11 +9,9 @@ use affect_storage::{
         client::DatabaseClient,
         store::{OnDemandStore, TransactionalStore},
     },
+    models::nonprofit::*,
     page_token::{PageToken, PageTokenable},
-    stores::{
-        affiliate::AffiliateStore,
-        nonprofit::{NonprofitPageToken, NonprofitStore},
-    },
+    stores::{affiliate::AffiliateStore, nonprofit::NonprofitStore},
 };
 use async_trait::async_trait;
 use std::{

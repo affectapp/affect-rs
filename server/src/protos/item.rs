@@ -1,6 +1,6 @@
 use crate::protobuf::from::ProtoFrom;
 use affect_api::affect::{Account, Item};
-use affect_storage::stores::{account::AccountRow, item::ItemRow};
+use affect_storage::models::{account::AccountRow, item::ItemRow};
 use prost_types::Timestamp;
 use tonic::Status;
 

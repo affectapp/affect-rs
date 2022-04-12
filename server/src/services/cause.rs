@@ -9,8 +9,9 @@ use affect_storage::{
         client::DatabaseClient,
         store::{OnDemandStore, TransactionalStore},
     },
+    models::cause::*,
     page_token::{PageToken, PageTokenable},
-    stores::cause::{CauseAndRecipientStore, CausePageToken, CauseStore},
+    stores::cause::*,
 };
 use async_trait::async_trait;
 use std::{

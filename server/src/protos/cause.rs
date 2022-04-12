@@ -1,6 +1,6 @@
 use crate::protobuf::from::ProtoFrom;
 use affect_api::affect::{Cause, CauseRecipient};
-use affect_storage::stores::cause::{CauseRecipientRow, CauseRow, FullCauseRow};
+use affect_storage::models::cause::{CauseRecipientRow, CauseRow, FullCauseRow};
 use prost_types::Timestamp;
 use tonic::Status;
 

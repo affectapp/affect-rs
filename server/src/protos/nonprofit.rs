@@ -1,6 +1,6 @@
 use crate::protobuf::{from::ProtoFrom, into::IntoProto};
 use affect_api::affect::Nonprofit;
-use affect_storage::stores::nonprofit::FullNonprofitRow;
+use affect_storage::models::nonprofit::FullNonprofitRow;
 use tonic::Status;
 
 impl ProtoFrom<FullNonprofitRow> for Nonprofit {

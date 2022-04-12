@@ -1,11 +1,11 @@
 use crate::protobuf::{from::ProtoFrom, into::IntoProto};
 use affect_api::affect::{Affiliate, AffiliateManager};
-use affect_storage::stores::affiliate::FullAffiliateRow;
+use affect_storage::models::affiliate::FullAffiliateRow;
 use tonic::Status;
 
 // Same type name.
 use affect_api::affect::BusinessType as ProtoBusinessType;
-use affect_storage::stores::affiliate::BusinessType as StoreBusinessType;
+use affect_storage::models::affiliate::BusinessType as StoreBusinessType;
 
 impl ProtoFrom<FullAffiliateRow> for Affiliate {
     fn proto_from(value: FullAffiliateRow) -> Result<Self, Status> {
@@ -33,7 +33,7 @@ impl ProtoFrom<FullAffiliateRow> for Affiliate {
 }
 
 impl ProtoFrom<StoreBusinessType> for ProtoBusinessType {
-    fn proto_from(value: affect_storage::stores::affiliate::BusinessType) -> Result<Self, Status> {
+    fn proto_from(value: affect_storage::models::affiliate::BusinessType) -> Result<Self, Status> {
         match value {
             StoreBusinessType::Individual => Ok(Self::Individual),
             StoreBusinessType::Company => Ok(Self::Company),

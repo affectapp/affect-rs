@@ -1,5 +1,5 @@
 use crate::{
-    database::client::DatabaseClient, stores::nonprofit::*,
+    database::client::DatabaseClient, models::nonprofit::*, stores::nonprofit::*,
     tests::integration::containers::PgContainer,
 };
 use chrono::{TimeZone, Utc};

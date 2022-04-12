@@ -1,5 +1,5 @@
 use crate::change::client::{ChangeClient, SearchNonprofitsRequestBuilder};
-use affect_storage::stores::nonprofit::{NewNonprofitRow, NonprofitStore};
+use affect_storage::{models::nonprofit::NewNonprofitRow, stores::nonprofit::NonprofitStore};
 use anyhow::Context;
 use chrono::Utc;
 use log::debug;
