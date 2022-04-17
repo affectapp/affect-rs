@@ -65,7 +65,7 @@ dependencies = [
 [[package]]
 name = "affect-api"
 version = "0.1.0"
-source = "git+https://github.com/affectapp/api?rev=232f626#232f6266034c2335879429c5110e1371e5554635"
+source = "git+https://github.com/affectapp/api?rev=a3f054a#a3f054a8a558d9eaacad59f80a7f002f6167ceec"
 dependencies = [
  "prost",
  "prost-types",
