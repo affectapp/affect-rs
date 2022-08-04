@@ -9,7 +9,7 @@ pub fn invalid_field<T: Debug>(field_name: &str, error: T) -> Status {
     invalid_argument!("'{0}' is invalid: {1:?}", field_name, error)
 }
 
-pub fn entity_not_found<T: Debug>(entity_name: &str) -> Status {
+pub fn entity_not_found(entity_name: &str) -> Status {
     not_found!("{0} not found", entity_name)
 }
 

@@ -1,7 +1,7 @@
 use affect_api::affect::{
     affiliate_service_server::AffiliateServiceServer, cause_service_server::CauseServiceServer,
-    item_service_server::ItemServiceServer, nonprofit_service_server::NonprofitServiceServer,
-    user_service_server::UserServiceServer,
+    donation_service_server::DonationServiceServer, item_service_server::ItemServiceServer,
+    nonprofit_service_server::NonprofitServiceServer, user_service_server::UserServiceServer,
 };
 use affect_server::{
     change::client::{ChangeClient, ChangeCredentials},
@@ -10,8 +10,8 @@ use affect_server::{
     interceptors::authn::AuthnInterceptor,
     seed,
     services::{
-        affiliate::AffiliateServiceImpl, cause::CauseServiceImpl, item::ItemServiceImpl,
-        nonprofit::NonprofitServiceImpl, user::UserServiceImpl,
+        affiliate::AffiliateServiceImpl, cause::CauseServiceImpl, donation::DonationServiceImpl,
+        item::ItemServiceImpl, nonprofit::NonprofitServiceImpl, user::UserServiceImpl,
     },
     tonic::async_interceptor::AsyncInterceptorLayer,
 };
@@ -92,6 +92,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     );
     let cause_service = CauseServiceImpl::new(database.clone());
     let affiliate_service = AffiliateServiceImpl::new(database.clone(), stripe_client.clone());
+    let donation_service = DonationServiceImpl::new(database.clone(), stripe_client.clone());
 
     let port: u16 = match (config.port, config.port_env_var) {
         (None, Some(port_env_var)) => std::env::var(&port_env_var)?.parse()?,
@@ -108,6 +109,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(ItemServiceServer::new(item_service))
         .add_service(CauseServiceServer::new(cause_service))
         .add_service(AffiliateServiceServer::new(affiliate_service))
+        .add_service(DonationServiceServer::new(donation_service))
         .serve(addr)
         .await?;
 

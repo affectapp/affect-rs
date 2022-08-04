@@ -65,7 +65,7 @@ dependencies = [
 [[package]]
 name = "affect-api"
 version = "0.1.0"
-source = "git+https://github.com/affectapp/api?rev=a3f054a#a3f054a8a558d9eaacad59f80a7f002f6167ceec"
+source = "git+https://github.com/affectapp/api?rev=32039c5#32039c56a436187b84a8b6fd9ec16b05330145ed"
 dependencies = [
  "prost",
  "prost-types",
@@ -90,6 +90,7 @@ dependencies = [
  "env_logger",
  "futures",
  "hyper",
+ "iso_currency",
  "jwks-client",
  "log",
  "mockall",
@@ -1344,6 +1345,25 @@ name = "ipnet"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35e70ee094dc02fd9c13fdad4940090f22dbd6ac7c9e7094a46cf0232a50bc7c"
+
+[[package]]
+name = "iso_country"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20633e788d3948ea7336861fdb09ec247f5dae4267e8f0743fa97de26c28624d"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
+name = "iso_currency"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a84a90699ade3729a8937276a4308a4f6d943b2fd947292f2a4dce550fa5c96a"
+dependencies = [
+ "iso_country",
+ "serde",
+]
 
 [[package]]
 name = "itertools"
